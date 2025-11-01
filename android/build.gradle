@@ -11,12 +11,12 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://jitpack.io' }  // Add JitPack for react-native-camera
     }
     dependencies {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        classpath 'com.google.gms:google-services:4.4.0'  // Add this for Firebase
     }
 }
 
@@ -26,6 +26,9 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://jitpack.io' }  // Add here too
     }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }

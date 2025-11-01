@@ -1,19 +1,17 @@
+import firebase from '@react-native-firebase/app';
 import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-  export async function getFcmToken() {
-    const existingToken = await AsyncStorage.getItem('fcm_token');
-    if (!existingToken) {
-      return await checkFcmToken();
-    }
-    return existingToken;
-  }
+if (!firebase.apps.length) {
+  firebase.initializeApp({});
+}
 
-  async function checkFcmToken(): Promise<string | null> {
+export async function getFcmToken() {
+  const existingToken = await AsyncStorage.getItem('fcm_token');
+  if (!existingToken) {
     try {
       const newToken = await messaging().getToken();
       if (newToken) {
-        console.log('New FCM token:', newToken);
         await AsyncStorage.setItem('fcm_token', newToken);
         return newToken;
       }
@@ -22,4 +20,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
       return null;
     }
   }
+  return existingToken;
+}
 

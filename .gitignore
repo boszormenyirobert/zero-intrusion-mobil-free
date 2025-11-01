@@ -43,7 +43,7 @@ yarn-debug.log*
 yarn-error.log*
 
 app/build/
-app/google-services.json
+android/app/google-services.json
 
 # React Native Android
 android/app/build/
