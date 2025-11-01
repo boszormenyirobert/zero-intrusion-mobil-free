@@ -1,5 +1,15 @@
 {
-  "extends": "@react-native/typescript-config",
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["**/node_modules", "**/Pods"]
+  "include": ["**/*.ts", "**/*.tsx", "src/services/DeviceRegistration.tsx"],
+  "exclude": ["**/node_modules", "**/Pods"],
+    
+      "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "jsx": "react-jsx", 
+        "allowJs": true,
+        "esModuleInterop": true,
+        "moduleResolution": "bundler",
+        "strict": false,
+        "skipLibCheck": true
+      }
 }

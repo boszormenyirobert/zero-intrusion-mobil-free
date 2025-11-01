@@ -1,3 +1,46 @@
+### Build error
+> Failed to apply plugin 'com.facebook.react.rootproject'.
+   > A problem occurred configuring project ':app'.
+      > Failed to notify project evaluation listener.
+         > C:\wamp64\www\PlatfomFreeZeroIntrusion\ZeroIntrusion\node_modules\react-native\sdks\hermes-engine\version.properties (Das System kann die angegebene Datei nicht finden)
+
+touch node_modules/react-native/sdks/hermes-engine/version.properties
+echo hermes.version=0.0.0 > node_modules\react-native\sdks\hermes-engine\version.properties
+
+npm install --save-dev @react-native-community/cli
+npm list react-native
+npm install hermes-engine@0.81.4 --save --save => version !
+npm install hermes-engine
+
+
+npx react-native doctor
+npx react-native-clean-project
+npx react-native start --reset-cache
+
+rm -rf node_modules
+rm -rf android/app/build
+rm -rf android/build
+rm -rf ~/.gradle/caches
+rm -rf ~/.gradle/daemon
+rm -rf ~/.gradle/native
+rm -rf ~/.gradle/wrapper
+-----------------------------------------------------------------------
+rm -rf C:\Users\boszo\.gradle\caches\8.14.3
+rm -rf android/build
+rm -rf android/app/build
+
+rm -rf node_modules
+rm package-lock.json
+npm cache clean --force
+npm install
+
+
+./gradlew clean
+./gradlew assembleDebug
+npx react-native run-android
+
+
+
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
 # Getting Started
