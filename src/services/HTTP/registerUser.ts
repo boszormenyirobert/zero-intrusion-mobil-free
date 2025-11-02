@@ -6,11 +6,10 @@ export const registerUser = async (body:any) => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-           'X-Extension-Auth': `HMAC` 
+           'X-Extension-Auth': "HMAC "
         },
         body: JSON.stringify(body),
       });
 
       return false;
-
 }

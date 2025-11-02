@@ -3,7 +3,6 @@ import { COLORS } from './../../Colors.style';
 
 export default StyleSheet.create({
   container: {
-    flex: 1,
     padding: 20,
     marginTop: 50,
     backgroundColor: COLORS.white,

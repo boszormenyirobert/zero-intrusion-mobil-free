@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, Switch } from 'react-native';
+import { View, TextInput, Button, Text, Switch, ScrollView } from 'react-native';
 import getEncryptedIdentification from '../../services/Encrypter';
 import { registerUser } from '../../services/HTTP/registerUser';
 import { getFcmToken } from '../../services/Firebase';
@@ -44,7 +44,7 @@ export default function UserRegistration({
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView  style={styles.container}>
       <Text style={styles.headLine}>{t('registration.title')}</Text>
 
       <Text style={styles.subLine}>
@@ -70,12 +70,12 @@ export default function UserRegistration({
         onChangeText={setPhone}
       />
 
-      <View style={styles.switchContainer}>
+      <View >
         <Switch value={accepted} onValueChange={setAccepted} />
         <Text style={styles.accept}>{t('registration.acceptTerms')}</Text>
       </View>
 
       <Button title="Regisztráció" onPress={handleSubmit} />
-    </View>
+    </ScrollView>
   );
 }

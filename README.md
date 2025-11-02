@@ -17,39 +17,51 @@ npx react-native doctor
 npx react-native-clean-project
 npx react-native start --reset-cache
 
-.\gradlew --stop
-rm -rf android/app/.cxx
-rm -rf android/app/build
-rm -rf node_modules
-rm -rf android/app/build
-rm -rf android/build
-rm -rf ~/.gradle/caches
-rm -rf ~/.gradle/daemon
-rm -rf ~/.gradle/native
-rm -rf ~/.gradle/wrapper
-npm cache clean --force
-rm package-lock.json
------------------------------------------------------------------------
-./gradlew clean
-./gradlew assembleDebug
-npx react-native run-android
+```
+   .\gradlew --stop
+   rm -rf android/app/.cxx
+   rm -rf android/app/build
+   rm -rf node_modules
+   rm -rf android/app/build
+   rm -rf android/build
+   rm -rf ~/.gradle/caches
+   rm -rf ~/.gradle/daemon
+   rm -rf ~/.gradle/native
+   rm -rf ~/.gradle/wrapper
+   npm cache clean --force
+   rm package-lock.json
+```
+---
+## Run emulator
+   ```
+   emulator -list-avds
+   emulator -avd Pixel_8
+   ```
+---
+   ```
+   ./gradlew clean
+   ./gradlew assembleDebug
+   npx react-native run-android
 
-( adb uninstall com.zerointrusion )
---------------------------------------------------------------------------
+   ( adb uninstall com.zerointrusion )
+```
+---
+```
 adb kill-server
-Task Manager → Részletek → zárd be:
-emulator.exe
-qemu-system-x86_64.exe
-netsimd.exe
-adb.exe
+   Task Manager → Részletek → zárd be:
+   emulator.exe
+   qemu-system-x86_64.exe
+   netsimd.exe
+   adb.exe
+```
+---
 
 taskkill /F /IM adb.exe
 del "%USERPROFILE%\AppData\Local\Android\Sdk\emulator\*.lock"
 del "%USERPROFILE%\.android\avd\Pixel_8.avd\*.lock"
 del "%USERPROFILE%\.android\adbkey*"
 
-emulator -list-avds
-emulator -avd Pixel_8
+
 
 
 

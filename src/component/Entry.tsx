@@ -4,7 +4,8 @@ import styles from '../Entry.style';
 import Cards from './Cards/Cards';
 import { useTranslation } from 'react-i18next';
 import '../i18n';
-import AutoQRScanner from './AutoQRScanner/AutoQRScanner';  // Fixed import path
+import AutoQRScanner from './AutoQRScanner/AutoQRScanner'; 
+import { handleQRScan } from '../services/HandleQRScan';
 
 const ScanCode: React.FunctionComponent = () => {
   const { t } = useTranslation();
@@ -12,7 +13,6 @@ const ScanCode: React.FunctionComponent = () => {
   const [view, setView] = useState('default');
   
   const handleScanner = async () => {
-    console.log("handleScanner");
     setView('scanner');
   }
   const handleResetDevelopment = async () => {
@@ -29,9 +29,8 @@ const ScanCode: React.FunctionComponent = () => {
   }
 
   const handleQRResult = (data: string) => {
-    console.log("Scanned QR Code:", data);
-    // Add your logic here, e.g., navigate back or process the data
-    setView('default');  // Return to default view after scanning
+    handleQRScan(data);
+    setView('default');  
   };
 
 return (
