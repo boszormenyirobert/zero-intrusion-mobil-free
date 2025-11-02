@@ -1,13 +1,14 @@
 import * as i from '../services/Interfaces/interfaces';
-import { QRHandler } from './HTTP/mapper';
+import { RequestHandler } from './HTTP/RequestHandler';
 
 export async function handleQRScan(data: string) {
-  const handler = new QRHandler();
+  const handler = new RequestHandler();
   const handleRoute = {
     systemHubLogin: handler.systemHubLogin,
     systemHubRegistration: handler.systemHubRegistration,
     registrationDomain: handler.registrationDomain,
     registrationApplication: handler.registrationApplication,
+    domainLogin: handler.domainLogin,
     deleteDomain: (qrInput: i.QRData) => console.log("delete_domain", qrInput),
     listApplications: (qrInput: i.QRData) => console.log("list_applications", qrInput)
   };
@@ -27,7 +28,7 @@ export async function handleQRScan(data: string) {
   }
 }
 
-function toCamelCase(str: string): string {
-  return str.replace(/[-_]([a-z])/g, (_, c) => c.toUpperCase());
+function toCamelCase(requestType: string): string {
+  return requestType.replace(/[-_]([a-z])/g, (_, c) => c.toUpperCase());
 }
 
