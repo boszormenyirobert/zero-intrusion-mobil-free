@@ -4,6 +4,7 @@ import styles from '../../Entry.style';
 import { COLORS } from '../../Colors.style';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
+import { icons } from '../../services/Icons';
 
 type CardProps = {
   type: 'scanCode' | 'pay' | 'reset' | 'biometric' | 'stop';
@@ -12,14 +13,6 @@ type CardProps = {
   singleRow?: boolean;
   position?: 'left' | 'right';
 };
-
-const icons = {
-  qr_code: require('../../assets/qr_code.png'),
-  pay: require('../../assets/pay.png'),
-  reset: require('../../assets/reset.png'),
-  biometric: require('../../assets/biometric.png'),
-  stop: require('../../assets/stop.png'),
-} as const;
 
 export const Cards: React.FC<CardProps> = ({
   type,
@@ -45,6 +38,7 @@ export const Cards: React.FC<CardProps> = ({
     } as const;
     const content = cardData[type];
 
+  //single-row layout: User action card layout
   if (singleRow) {
     return (
       <TouchableOpacity style={styles.cardContainer} onPress={action}>
@@ -61,7 +55,7 @@ export const Cards: React.FC<CardProps> = ({
     );
   }
 
-  // multi-row layout
+  // multi-row layout: Allow || Decline request
   return (
     <TouchableOpacity
       style={[

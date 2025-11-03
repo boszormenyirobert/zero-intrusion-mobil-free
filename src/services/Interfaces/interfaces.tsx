@@ -16,16 +16,6 @@ export interface HubRegistration {
   isNew: string;
 }
 
-export interface HubLogin {
-  domain: string;
-  domainProcessId: string;
-  xExtensionAuthOne: string;
-  type: 'system_hub_login';
-  corporateId: string;
-  corporateAuthentication: string;
-  source: string;
-}
-
 // Extended interfaces for API requests
 export interface HubRegistrationExtended
   extends Omit<HubRegistration, 'xExtensionAuthOne'>,
@@ -35,6 +25,16 @@ export interface HubRegistrationExtended
   xExtensionAuth: string;
   description: string;
   userCredential: string;
+}
+
+export interface HubLogin {
+  domain: string;
+  domainProcessId: string;
+  xExtensionAuthOne: string;
+  type: 'system_hub_login';
+  corporateId: string;
+  corporateAuthentication: string;
+  source: string;
 }
 
 export interface HubLoginExtended
@@ -77,30 +77,44 @@ export interface DomainLoginExtended
       update: false
     }
 
+export interface DomainDelete {
+  domain: string;
+  type: 'domain-delete';
+  source: string;  
+  removeProcessId: string;
+  xExtensionAuthOne: string;
+}
+
+export interface DomainDeleteExtended
+  extends Omit<DomainDelete, 'xExtensionAuthOne'>,
+    UserProperties {}
+
 // Union type for all QR data types
 export type QRData =
   | HubRegistration
   | HubLogin
   | DomainRegistration
-  | DomainLogin;
+  | DomainLogin
+  | DomainDelete;
+
+export const Device = {
+  publicId: 'string',
+  privateId: 'string',
+  email : 'string',
+  phone : 'string' ,
+  privacyPolicy : false,
+  fcmToken: 'string'
+};
+
+export type UserRegistrationProps = {
+  setValidUser: (valid: boolean) => void;
+};
 
 // Define return types for each incoming type
-export interface LoginResponse {
-  corporateId: string;
-  corporateAuthentication: string;
-  source: string;
-}
-
 export interface RegistrationResponse {
   domain: string;
   domainProcessId: string;
   xExtensionAuthOne: string;
-}
-
-export interface DomainRegistrationResponse {
-  domain: string;
-  xExtensionAuthOne: string;
-  corporateId: string;
 }
 
 export interface ApplicationRegistrationResponse {

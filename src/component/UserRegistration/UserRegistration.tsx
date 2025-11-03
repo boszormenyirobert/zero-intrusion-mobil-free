@@ -8,14 +8,11 @@ import styles from './UserRegistration.style';
 import { COLORS } from './../../Colors.style';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
-
-type UserRegistrationProps = {
-  setValidUser: (valid: boolean) => void;
-};
+import * as i from '../../services/Interfaces/interfaces';
 
 export default function UserRegistration({
   setValidUser,
-}: UserRegistrationProps) {
+}: i.UserRegistrationProps) {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -26,7 +23,7 @@ export default function UserRegistration({
       if (!email || !phone || !accepted) {
         return;
       }
-      const data = await getEncryptedIdentification();
+      const data: typeof i.Device = await getEncryptedIdentification();
       data.email = email;
       data.phone = phone;
       data.privacyPolicy = accepted;

@@ -3,8 +3,9 @@ import { getPrivateId, getPublicId, getSecret } from './DeviceStore';
 import nacl from 'tweetnacl';
 import { encodeBase64, decodeUTF8 } from 'tweetnacl-util';
 import blake2b from 'blake2b';
+import * as i from './Interfaces/interfaces';
 
-export default async function getEncryptedIdentification() {
+export default async function getEncryptedIdentification(): Promise<typeof i.Device> {
   const privateId = await getPrivateId();          
   const secret = await getSecret();
   const publicId = await getPublicId();

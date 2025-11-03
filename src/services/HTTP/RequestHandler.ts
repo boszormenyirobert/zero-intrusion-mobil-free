@@ -1,6 +1,8 @@
 import * as i from '../Interfaces/interfaces';
 import {SystemHubRegistration, SystemHubLogin} from './SystemHub/SystemHub';
-import {DomainRegistration, DomainLogin} from './PasswordManager/Domain/Domain';
+import {Registration as DomainRegistration} from './PasswordManager/Domain/Registration';
+import {Access as DomainAccess} from './PasswordManager/Domain/Access';
+import {Delete as DomainDelete} from './PasswordManager/Domain/Delete';
 
 export class RequestHandler {
   // Map for system_hub_registration -- and any other sites, which are registrated in the Hub(async API call)
@@ -18,17 +20,13 @@ export class RequestHandler {
     return await DomainRegistration(data);
   }
 
-  // Map for registration_application (assuming similar to domain)
-  registrationApplication(data: i.DomainRegistration): i.ApplicationRegistrationResponse {
-    return {
-      domain: data.domain,
-      corporateId: "",  // Not present, set default
-      corporateAuthentication: ""  // Not present, set default
-    };
-  }
-
    // Map for accessing domain credentials (async API call)
   async domainLogin(data: i.DomainLogin): Promise<boolean> {
-    return await DomainLogin(data);
+    return await DomainAccess(data);
+  }
+
+   // Map for delete domain credentials (async API call)
+  async domainDelete(data: i.DomainLogin): Promise<boolean> {
+    return await DomainDelete(data);
   }
 }

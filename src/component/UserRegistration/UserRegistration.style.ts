@@ -4,7 +4,9 @@ import { COLORS } from './../../Colors.style';
 export default StyleSheet.create({
   container: {
     padding: 20,
-    marginTop: 50,
+    paddingBottom:50,
+    marginTop: 0,
+    marginBottom: 50,
     backgroundColor: COLORS.white,
   },
   input: {

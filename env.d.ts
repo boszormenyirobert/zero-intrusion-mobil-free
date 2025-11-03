@@ -3,4 +3,5 @@ declare module '@env' {
   export const API_RECOVERY_SETTINGS: string;
   export const API_REGISTRATION: string;
   export const API_LOGIN: string;
+  export const API_ALLOW_DELETE_DOMAIN: string;
 }

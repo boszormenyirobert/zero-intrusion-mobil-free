@@ -4,12 +4,15 @@ import { RequestHandler } from './HTTP/RequestHandler';
 export async function handleQRScan(data: string) {
   const handler = new RequestHandler();
   const handleRoute = {
+    // Map for system hub login || and registrated sites in the Hub
     systemHubLogin: handler.systemHubLogin,
     systemHubRegistration: handler.systemHubRegistration,
+    // Password Manager
+    // handle user-credentials to an domain
     registrationDomain: handler.registrationDomain,
-    registrationApplication: handler.registrationApplication,
     domainLogin: handler.domainLogin,
-    deleteDomain: (qrInput: i.QRData) => console.log("delete_domain", qrInput),
+    deleteDomain: handler.domainDelete,
+    //handle applications user-credentials to an software
     listApplications: (qrInput: i.QRData) => console.log("list_applications", qrInput)
   };
 
