@@ -26,7 +26,7 @@ export class RequestHandler {
   }
 
    // Map for delete domain credentials (async API call)
-  async domainDelete(data: i.DomainLogin): Promise<boolean> {
+  async domainDelete(data: i.DomainDelete): Promise<boolean> {
     return await DomainDelete(data);
   }
 }

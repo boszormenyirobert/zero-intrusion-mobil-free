@@ -5,6 +5,8 @@ import { COLORS } from '../../Colors.style';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import { icons } from '../../services/Icons';
+import useFirebaseMessaging from '../../services/Firebase';
+import messaging from '@react-native-firebase/messaging';
 
 type CardProps = {
   type: 'scanCode' | 'pay' | 'reset' | 'biometric' | 'stop';
@@ -37,6 +39,11 @@ export const Cards: React.FC<CardProps> = ({
         },
     } as const;
     const content = cardData[type];
+
+    // Request permission for push notifications
+    messaging().requestPermission();
+    // Initialize Firebase Messaging hook
+    useFirebaseMessaging();
 
   //single-row layout: User action card layout
   if (singleRow) {
