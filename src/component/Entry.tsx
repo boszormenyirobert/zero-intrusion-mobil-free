@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import '../i18n';
 import AutoQRScanner from './AutoQRScanner/AutoQRScanner'; 
 import { handleQRScan } from '../services/HandleQRScan';
+import {setAccessState} from '../services/Firebase';
 
 const ScanCode: React.FunctionComponent = () => {
   const { t } = useTranslation();
@@ -23,9 +24,11 @@ const ScanCode: React.FunctionComponent = () => {
   }
   const handleAllowAccess = async () => {
     console.log("handleAllowAccess");
+    setAccessState(true);
   }
   const handleDeclineAccess = async () => {
     console.log("handleDeclineAccess");
+    setAccessState(false);
   }
 
   const handleQRResult = (data: string) => {

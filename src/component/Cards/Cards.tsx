@@ -40,10 +40,13 @@ export const Cards: React.FC<CardProps> = ({
     } as const;
     const content = cardData[type];
 
+    // 
+    const [messageState, setMessageState] = React.useState(false);
     // Request permission for push notifications
     messaging().requestPermission();
     // Initialize Firebase Messaging hook
-    useFirebaseMessaging();
+    useFirebaseMessaging(setMessageState);
+
 
   //single-row layout: User action card layout
   if (singleRow) {
@@ -70,7 +73,8 @@ export const Cards: React.FC<CardProps> = ({
         styles.justifyContent,
         styles.flex_01,
         position === 'right' ? styles.alert : undefined,
-        position === 'left' ? styles.opticalPadding : undefined
+        position === 'left' ? styles.opticalPadding : undefined,
+        messageState ? {borderColor: '#ffee01ff'} : undefined
       ]}
       onPress={action}
     >

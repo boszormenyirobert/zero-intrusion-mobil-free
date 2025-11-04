@@ -8,6 +8,11 @@ if (!firebase.apps.length) {
   firebase.initializeApp({});
 }
 
+let allowAccess = false;
+export const setAccessState = (allow:boolean) => {
+  allowAccess=allow;
+};
+
 export async function getFcmToken() {
   const existingToken = await AsyncStorage.getItem('fcm_token');
   if (!existingToken) {
@@ -24,14 +29,26 @@ export async function getFcmToken() {
   return existingToken;
 }
 
-export default function useFirebaseMessaging() {  
+export default function useFirebaseMessaging(setMessageState) {  
   useEffect(() => {
     const unsubscribeMessage = messaging().onMessage(async remoteMessage => {
       console.log('FCM message:', remoteMessage.data);
       const {action, qrData} = remoteMessage.data;
+
       if (action === 'show_allow_close') {
+        setMessageState(true);
+        
+        // Set timer to reset messageState to false after 10 seconds
+        setTimeout(() => {
+          setMessageState(false);
+          setAccessState(false);
+        }, 10000);
+        
         try {
-          await handleQRScan(qrData.toString());
+        //  if (allowAccess) {
+            console.log("Access allowed by user.");
+            await handleQRScan(qrData.toString());
+        //  }          
         } catch (error) {
           console.error("Error in handleQRScan:", error);
         }
@@ -41,5 +58,5 @@ export default function useFirebaseMessaging() {
     return () => {
       unsubscribeMessage();     
     };
-  }, []);
+  }, [setMessageState]);
 }
