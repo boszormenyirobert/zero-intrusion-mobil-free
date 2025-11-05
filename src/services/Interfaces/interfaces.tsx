@@ -41,13 +41,13 @@ export interface HubLoginExtended
   extends Omit<HubLogin, 'xExtensionAuthOne'>,
     UserProperties {}
 
-// Domain registration interfaces
-export interface DomainRegistration {
+// Domain or Software registration interfaces
+export interface Registration {
   userName: string;
   userPassword: string;
   registrationProcessId: string;
   xExtensionAuthOne: string;
-  type: 'registration-domain';
+  type: 'registration-domain'|'update-applications';
   source: string;
   isNew: boolean;
   description: string;
@@ -55,14 +55,14 @@ export interface DomainRegistration {
   application: string | null;
 }
 
-export interface DomainRegistrationExtended
-  extends Omit<DomainRegistration, 'xExtensionAuthOne'>,
+export interface RegistrationExtended
+  extends Omit<Registration, 'xExtensionAuthOne'>,
     UserProperties {
   userCredential: string;
   update: boolean;
 }
 
-export interface DomainLogin {
+export interface Access {
   domain: string;
   domainProcessId: string;
   xExtensionAuthOne: string;
@@ -71,31 +71,31 @@ export interface DomainLogin {
   iv: string;
 }
 
-export interface DomainLoginExtended
-  extends Omit<DomainLogin, 'xExtensionAuthOne'>,
+export interface AccessExtended
+  extends Omit<Access, 'xExtensionAuthOne'>,
     UserProperties {
       update: false
     }
 
-export interface DomainDelete {
+export interface Delete {
   domain: string;
-  type: 'domain-delete';
+  type: 'domain-delete'|'delete-applications';
   source: string;  
   removeProcessId: string;
   xExtensionAuthOne: string;
 }
 
-export interface DomainDeleteExtended
-  extends Omit<DomainDelete, 'xExtensionAuthOne'>,
+export interface DeleteExtended
+  extends Omit<Delete, 'xExtensionAuthOne'>,
     UserProperties {}
 
 // Union type for all QR data types
 export type QRData =
   | HubRegistration
   | HubLogin
-  | DomainRegistration
-  | DomainLogin
-  | DomainDelete;
+  | Registration
+  | Access
+  | Delete;
 
 export const Device = {
   publicId: 'string',
@@ -108,6 +108,7 @@ export const Device = {
 
 export type UserRegistrationProps = {
   setValidUser: (valid: boolean) => void;
+  setView?: (view: string) => void;
 };
 
 // Define return types for each incoming type

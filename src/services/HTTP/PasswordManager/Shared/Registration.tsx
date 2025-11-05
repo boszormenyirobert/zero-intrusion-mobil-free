@@ -1,5 +1,5 @@
 import * as i from '../../../Interfaces/interfaces';
-import { API_REGISTRATION } from '@env';
+import { API_REGISTRATION, API_ALLOW_EDIT_APPLICATIONS } from '@env';
 import {
   getPublicId,
   getPrivateId,
@@ -14,9 +14,13 @@ const encryptPrivateId = async (): Promise<string> => {
 };
 
 // Function to handle domain registration ~ add new credentials to an domain
-export const Registration = async (qrJson: i.DomainRegistration) => {
+export const Registration = async (qrJson: i.Registration) => {
+  const path = qrJson.type === 'update-applications'
+    ? API_ALLOW_EDIT_APPLICATIONS
+    : API_REGISTRATION;
+
   try {
-    const { xExtensionAuthOne, ...domainRegistrationData } = qrJson;
+    const { xExtensionAuthOne, ...registrationData } = qrJson;
     const authToken = xExtensionAuthOne || '';
 
     const secretMessage = {
@@ -30,8 +34,8 @@ export const Registration = async (qrJson: i.DomainRegistration) => {
     );
 
     // Build request body with encrypted data
-    const body: i.DomainRegistrationExtended = {
-      ...domainRegistrationData, // Spread the remaining qrJson properties
+    const body: i.RegistrationExtended = {
+      ...registrationData,
       publicId: await getPublicId(),
       privateId: await encryptPrivateId(),
       email: await getEmail(),
@@ -40,7 +44,7 @@ export const Registration = async (qrJson: i.DomainRegistration) => {
     };
 
     // Make API request
-    const response = await fetch(API_REGISTRATION, {
+    const response = await fetch(path, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

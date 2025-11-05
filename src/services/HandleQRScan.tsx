@@ -3,17 +3,33 @@ import { RequestHandler } from './HTTP/RequestHandler';
 
 export async function handleQRScan(data:string) {
   const handler = new RequestHandler();
-  const handleRoute = {
-    // Map for system hub login || and registrated sites in the Hub
-    systemHubLogin: handler.systemHubLogin,
+
+  // System Hub operations
+  const systemHubRoutes = {
     systemHubRegistration: handler.systemHubRegistration,
-    // Password Manager
-    // handle user-credentials to an domain
-    registrationDomain: handler.registrationDomain,
-    domainLogin: handler.domainLogin,
-    deleteDomain: handler.domainDelete,
-    //handle applications user-credentials to an software
-    listApplications: (qrInput: i.QRData) => console.log("list_applications", qrInput)
+    systemHubLogin: handler.systemHubLogin,   
+  };
+
+  // Domain operations - Password Manager
+  const domainRoutes = {
+    registrationDomain: handler.sharedRegistration,
+    domainLogin: handler.access,
+    deleteDomain: handler.delete,
+  };
+
+  // Application operations - Software credentials
+  const applicationRoutes = {
+    registrationApplication: handler.sharedRegistration,
+    applications: handler.access,
+    updateApplications: handler.sharedRegistration,
+    deleteApplications: handler.delete,
+  };
+
+  // Merge all route groups into handleRoute
+  const handleRoute = {
+    ...systemHubRoutes,
+    ...domainRoutes,
+    ...applicationRoutes,
   };
 
   try {

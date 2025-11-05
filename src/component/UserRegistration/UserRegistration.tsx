@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, TextInput, Button, Text, Switch, ScrollView } from 'react-native';
 import getEncryptedIdentification from '../../services/Encrypter';
 import { registerUser } from '../../services/HTTP/registerUser';
@@ -9,14 +9,26 @@ import { COLORS } from './../../Colors.style';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import * as i from '../../services/Interfaces/interfaces';
+import * as Device from '../../services/DeviceStore';
 
 export default function UserRegistration({
   setValidUser,
+  setView
 }: i.UserRegistrationProps) {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [accepted, setAccepted] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const fetchedEmail = (await Device.getEmail()) ?? '';
+      const fetchedPhone = (await Device.getPhone()) ?? '';
+      setEmail(fetchedEmail);
+      setPhone(fetchedPhone);
+      console.log('Fetched email and phone from storage' + fetchedEmail + ', ' + fetchedPhone );
+    })();
+  }, []);  
 
   const handleSubmit = async () => {
     try {
@@ -31,10 +43,10 @@ export default function UserRegistration({
 
       await Keychain.setInternetCredentials('email', 'user', email);
       await Keychain.setInternetCredentials('phone', 'user', phone);
-
-      console.log('Encrypted Identification:', data);
       await registerUser(data);
+
       setValidUser(true);
+      setView?.('default');
     } catch (error) {
       console.error(error);
     }

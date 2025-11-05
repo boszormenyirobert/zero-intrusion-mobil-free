@@ -1,6 +1,7 @@
 import * as Keychain from 'react-native-keychain';
 import { API_DEVICE_REGISTRATION } from  '@env';
 
+// Exception HMAC the registerDevice
 export const registerDevice = async () => {
     try {      
       const response = await fetch(API_DEVICE_REGISTRATION, {

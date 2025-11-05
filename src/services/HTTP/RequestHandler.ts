@@ -1,8 +1,8 @@
 import * as i from '../Interfaces/interfaces';
 import {SystemHubRegistration, SystemHubLogin} from './SystemHub/SystemHub';
-import {Registration as DomainRegistration} from './PasswordManager/Domain/Registration';
-import {Access as DomainAccess} from './PasswordManager/Domain/Access';
-import {Delete as DomainDelete} from './PasswordManager/Domain/Delete';
+import {Registration as SharedRegistration} from './PasswordManager/Shared/Registration';
+import {Access} from './PasswordManager/Shared/Access';
+import {Delete as DomainDelete} from './PasswordManager/Shared/Delete';
 
 export class RequestHandler {
   // Map for system_hub_registration -- and any other sites, which are registrated in the Hub(async API call)
@@ -15,18 +15,19 @@ export class RequestHandler {
     return await SystemHubLogin(data);
   }
 
+  // Shared domain/application access
+  // Map for accessing domain or application credentials (async API call)
+  async access(data: i.Access): Promise<boolean> {
+    return await Access(data);
+  }  
+
   // Map for registrate credentials to domain (async API call)
-  async registrationDomain(data: i.DomainRegistration): Promise<boolean> {
-    return await DomainRegistration(data);
+  async sharedRegistration(data: i.Registration): Promise<boolean> {
+    return await SharedRegistration(data);
   }
 
-   // Map for accessing domain credentials (async API call)
-  async domainLogin(data: i.DomainLogin): Promise<boolean> {
-    return await DomainAccess(data);
-  }
-
-   // Map for delete domain credentials (async API call)
-  async domainDelete(data: i.DomainDelete): Promise<boolean> {
+  // Map for delete domain or applicatoin credentials (async API call)
+  async delete(data: i.Delete): Promise<boolean> {
     return await DomainDelete(data);
   }
-}
+} 

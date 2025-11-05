@@ -1,5 +1,5 @@
 import * as i from '../../../Interfaces/interfaces';
-import { API_ALLOW_DELETE_DOMAIN } from '@env';
+import { API_ALLOW_DELETE_DOMAIN, API_ALLOW_DELETE_APPLICATION } from '@env';
 import {
   getPublicId,
   getPrivateId,
@@ -14,16 +14,19 @@ const encryptPrivateId = async (): Promise<string> => {
 };
 
 // Function to handle domain login ~ access stored credentials for an domain
-export const Delete = async (qrJson: i.DomainDelete)=> {
-    console.log(qrJson);
+export const Delete = async (qrJson: i.Delete)=> {
+  const path = qrJson.type === 'delete-applications'
+    ? API_ALLOW_DELETE_APPLICATION
+    : API_ALLOW_DELETE_DOMAIN;
+
   try {
     // Extract and remove xExtensionAuthOne from qrJson
     const { xExtensionAuthOne, ...loginData } = qrJson;
     const authToken = xExtensionAuthOne || "";
 
     // Build request body with encrypted data
-    const body: i.DomainDeleteExtended = {
-      ...loginData, // Spread the remaining qrJson properties
+    const body: i.DeleteExtended = {
+      ...loginData,
       publicId: await getPublicId(),
       privateId: await encryptPrivateId(),
       email: await getEmail()
@@ -32,7 +35,7 @@ export const Delete = async (qrJson: i.DomainDelete)=> {
     console.log('Login Body:', body);
 
     // Make API request
-    const response = await fetch(API_ALLOW_DELETE_DOMAIN, {
+    const response = await fetch(path, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

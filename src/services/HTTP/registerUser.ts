@@ -1,6 +1,9 @@
+/*
+* The endpoint is responsible for setting or updating the username and phone number.
+*/
 import { API_RECOVERY_SETTINGS } from  '@env';
 
-// Exception by HMAC the registerUser and registerDevice
+// Exception HMAC the registerUser, and recovery
 export const registerUser = async (body:any) => {
      await fetch(API_RECOVERY_SETTINGS, {
         method: 'POST',

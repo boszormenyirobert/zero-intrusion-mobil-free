@@ -37,7 +37,7 @@ export default StyleSheet.create({
     height: 50,
   },
   icon: {
-    tintColor: '#fff',
+    tintColor: COLORS.white,
     marginRight: 15,
   },
   descriptionContainer: {
@@ -78,15 +78,25 @@ export default StyleSheet.create({
   hr: {
     position: 'absolute',
     height: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
     width: '100%',
     bottom: 80,
   },
   rights: {
     position: 'absolute',
-    color: '#fff',
+    color: COLORS.white,
     fontSize: 14,
     bottom: 40,
     paddingHorizontal: 10,
+  },
+  notificationActive: {
+    borderColor: COLORS.yellow,
+    borderWidth: 2,
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  scannerContainer: {
+    flex: 1,
   },
 });

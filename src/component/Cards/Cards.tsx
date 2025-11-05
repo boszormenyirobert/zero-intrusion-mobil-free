@@ -5,8 +5,6 @@ import { COLORS } from '../../Colors.style';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import { icons } from '../../services/Icons';
-import useFirebaseMessaging from '../../services/Firebase';
-import messaging from '@react-native-firebase/messaging';
 
 type CardProps = {
   type: 'scanCode' | 'pay' | 'reset' | 'biometric' | 'stop';
@@ -14,6 +12,8 @@ type CardProps = {
   icon: keyof typeof icons;
   singleRow?: boolean;
   position?: 'left' | 'right';
+  enabled?: boolean;
+  messageState?: boolean;
 };
 
 export const Cards: React.FC<CardProps> = ({
@@ -22,12 +22,22 @@ export const Cards: React.FC<CardProps> = ({
   icon,
   singleRow = true,
   position,
+  enabled = true,
+  messageState = false,
 }) => {
     const { t } = useTranslation();    
     const cardData = {
         scanCode: {
             title: t('scanQRCode.title'),
             description:  t('scanQRCode.description'),
+        },
+        biometric: {
+            title: t('allow'),
+            description: t('biometric.description'),
+        },
+        stop: {
+            title: t('decline'),
+            description: t('stop.description'),
         },
         pay: {
             title: t('pay.title'),
@@ -40,18 +50,23 @@ export const Cards: React.FC<CardProps> = ({
     } as const;
     const content = cardData[type];
 
-    // 
-    const [messageState, setMessageState] = React.useState(false);
-    // Request permission for push notifications
-    messaging().requestPermission();
-    // Initialize Firebase Messaging hook
-    useFirebaseMessaging(setMessageState);
+    // Enhanced action handler for button state management
+    const enhancedAction = () => {
+        // Only allow action if button is enabled (for allow/decline buttons)
+        if (!singleRow && !enabled) {
+            console.log("� Button is disabled - no action taken");
+            return;
+        }
+        
+        // Execute the provided action
+        action();
+    };   
 
 
   //single-row layout: User action card layout
   if (singleRow) {
     return (
-      <TouchableOpacity style={styles.cardContainer} onPress={action}>
+      <TouchableOpacity style={styles.cardContainer} onPress={enhancedAction}>
         <View style={styles.iconContainer}>
           <Image source={icons[icon]} style={[styles.iconSize, styles.icon]} />
         </View>
@@ -74,9 +89,13 @@ export const Cards: React.FC<CardProps> = ({
         styles.flex_01,
         position === 'right' ? styles.alert : undefined,
         position === 'left' ? styles.opticalPadding : undefined,
-        messageState ? {borderColor: '#ffee01ff'} : undefined
+        messageState ? styles.notificationActive : undefined,
+        // Visual feedback for disabled state
+        !enabled ? styles.disabled : undefined
       ]}
-      onPress={action}
+      // Use enhancedAction for proper button state management
+      onPress={enhancedAction}
+      disabled={!enabled}
     >
       {position === 'left' && (
         <Image source={icons[icon]} style={[styles.iconSize, styles.icon, {'tintColor':COLORS.green}]} />

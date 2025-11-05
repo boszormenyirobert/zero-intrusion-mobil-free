@@ -6,6 +6,7 @@ export const COLORS = {
     weight_dark: '#494949ff',
     white : '#FFFFFF',
 
+    yellow: '#ffea00ff',
     green: '#21e24bff',
     error: '#580000'
 };

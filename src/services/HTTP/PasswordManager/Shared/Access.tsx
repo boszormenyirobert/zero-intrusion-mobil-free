@@ -1,5 +1,5 @@
 import * as i from '../../../Interfaces/interfaces';
-import { API_LOGIN } from '@env';
+import { API_LOGIN, API_ALLOW_APPLICATION_LIST } from '@env';
 import {
   getPublicId,
   getPrivateId,
@@ -14,26 +14,27 @@ const encryptPrivateId = async (): Promise<string> => {
 };
 
 // Function to handle domain login ~ access stored credentials for an domain
-export const Access = async (qrJson: i.DomainLogin)=> {
-    console.log(qrJson);
+export const Access = async (qrJson: i.Access)=> {
+  const path = qrJson.type === 'domain-login'
+    ? API_LOGIN
+    : API_ALLOW_APPLICATION_LIST;
+
   try {
     // Extract and remove xExtensionAuthOne from qrJson
     const { xExtensionAuthOne, ...loginData } = qrJson;
     const authToken = xExtensionAuthOne || "";
 
     // Build request body with encrypted data
-    const body: i.DomainLoginExtended = {
-      ...loginData, // Spread the remaining qrJson properties
+    const body: i.AccessExtended = {
+      ...loginData,
       publicId: await getPublicId(),
       privateId: await encryptPrivateId(),
       email: await getEmail(),
       update: false    
     };
 
-    console.log('Login Body:', body);
-
     // Make API request
-    const response = await fetch(API_LOGIN, {
+    const response = await fetch(path, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

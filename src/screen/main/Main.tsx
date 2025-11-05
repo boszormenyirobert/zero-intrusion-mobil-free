@@ -60,7 +60,7 @@ export default function MainScreen() {
 
       {/** Allow default view */}
       {validUser && (        
-          <Entry />       
+          <Entry setValidUser={setValidUser} />       
       )}       
     </>
   );  
