@@ -27,6 +27,13 @@ allprojects {
         google()
         mavenCentral()
     }
+    
+    // Set consistent JVM target for all modules
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            jvmTarget = "11"
+        }
+    }
 }
 
 task clean(type: Delete) {

@@ -1,4 +1,5 @@
 declare module '@env' {
+  export const API_BASE: string;
   export const API_DEVICE_REGISTRATION: string;
   export const API_RECOVERY_SETTINGS: string;
   export const API_REGISTRATION: string;
@@ -7,6 +8,7 @@ declare module '@env' {
   export const API_ALLOW_APPLICATION_LIST: string;
   export const API_ALLOW_EDIT_APPLICATIONS: string;
   export const API_ALLOW_DELETE_APPLICATION: string;
+  export const API_ALLOW_DELETE_APPLICATIONS: string;
 
   // Firebase configuration variables
   export const FIREBASE_API_KEY: string;

@@ -1,5 +1,5 @@
 import * as i from '../../../services/Interfaces/interfaces';
-import { API_REGISTRATION, API_LOGIN } from '@env';
+import config from '../../../config/environment';
 import { getPublicId, getPrivateId, getSecret, getEmail } from '../../../services/DeviceStore';
 import { encryptToBase64 } from '../../Encrypter';
 
@@ -42,7 +42,7 @@ export const SystemHubRegistration = async (qrJson: i.HubRegistration): Promise<
     };
 
     // Make API request
-    const response = await fetch(API_REGISTRATION, {
+    const response = await fetch(config.API_REGISTRATION, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ export const SystemHubLogin = async (qrJson: i.HubLogin): Promise<boolean> => {
     console.log('Login Body:', body);
 
     // Make API request
-    const response = await fetch(API_LOGIN, {
+    const response = await fetch(config.API_LOGIN, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -108,15 +108,3 @@ export const SystemHubLogin = async (qrJson: i.HubLogin): Promise<boolean> => {
     return false;
   }
 };
-
-export class QRHandler {
-  // Map for system_hub_registration (async API call)
-  async systemHubRegistration(data: i.HubRegistration): Promise<boolean> {
-    return await SystemHubRegistration(data);
-  }
-
-  // Map for system_hub_login (async API call)
-  async systemHubLogin(data: i.HubLogin): Promise<boolean> {
-    return await SystemHubLogin(data);
-  }
-}

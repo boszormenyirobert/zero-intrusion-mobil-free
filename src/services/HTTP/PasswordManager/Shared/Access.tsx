@@ -1,5 +1,5 @@
 import * as i from '../../../Interfaces/interfaces';
-import { API_LOGIN, API_ALLOW_APPLICATION_LIST } from '@env';
+import config from '../../../../config/environment';
 import {
   getPublicId,
   getPrivateId,
@@ -16,8 +16,8 @@ const encryptPrivateId = async (): Promise<string> => {
 // Function to handle domain login ~ access stored credentials for an domain
 export const Access = async (qrJson: i.Access)=> {
   const path = qrJson.type === 'domain-login'
-    ? API_LOGIN
-    : API_ALLOW_APPLICATION_LIST;
+    ? config.API_LOGIN
+    : config.API_ALLOW_APPLICATION_LIST;
 
   try {
     // Extract and remove xExtensionAuthOne from qrJson

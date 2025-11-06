@@ -17,6 +17,16 @@ npx react-native doctor
 npx react-native-clean-project
 npx react-native start --reset-cache
 
+## Build
+```
+npm start
+cd android
+./gradlew clean
+./gradlew clean && ./gradlew assembleRelease -x externalNativeBuildDebug -x externalNativeBuildReleas 
+adb install android/app/build/outputs/apk/release/app-release.apk
+```
+--------
+
 ```
    .\gradlew --stop
    rm -rf android/app/.cxx

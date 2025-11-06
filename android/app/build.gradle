@@ -4,21 +4,14 @@ apply plugin: "com.facebook.react"
 apply plugin: "com.google.gms.google-services"
 
 project.ext.react = [
-    enableHermes: true  // Enable Hermes (now aligned with root)
+    enableHermes: true,  // Enable Hermes
+    bundleCommand: "bundle",
+    bundleInDebug: false,
+    bundleInRelease: true,
+    extraPackagerArgs: []
 ]
 
 def hermesEnabled = rootProject.ext.hermesEnabled ?: project.ext.react.get("enableHermes", false)  // Use root value if available
-
-// Create the version.properties file during configuration if Hermes is enabled
-if (hermesEnabled.toBoolean()) {
-    def packageJson = new File(rootProject.projectDir.parentFile, "package.json")  // Correct path: parent of android/
-    def rnVersion = new groovy.json.JsonSlurper().parse(packageJson).version
-    def versionFile = new File(rootProject.projectDir.parentFile, "node_modules/react-native/sdks/hermes-engine/version.properties")  // Correct path
-    if (!versionFile.exists()) {
-        versionFile.getParentFile().mkdirs()
-        versionFile.write("VERSION_NAME=$rnVersion")
-    }
-}
 
 react {
     autolinkLibrariesWithApp()
@@ -33,6 +26,28 @@ android {
     compileSdk = rootProject.ext.compileSdkVersion
 
     namespace = "com.zerointrusion"
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+    
+    // Suppress deprecation warnings during compilation
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:-deprecation"
+        options.compilerArgs << "-Xlint:-unchecked"
+    }
+    
+    // Disable native builds temporarily to avoid CMake issues
+    packagingOptions {
+        pickFirst '**/libc++_shared.so'
+        pickFirst '**/libjsc.so'
+        pickFirst '**/libhermes.so'
+    }
     defaultConfig {
         applicationId = "com.zerointrusion"
         minSdkVersion = rootProject.ext.minSdkVersion

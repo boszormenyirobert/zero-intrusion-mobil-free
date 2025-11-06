@@ -1,13 +1,18 @@
 import * as Keychain from 'react-native-keychain';
-import { API_DEVICE_REGISTRATION } from  '@env';
+import config from '../../config/environment';
 
 // Exception HMAC the registerDevice
 export const registerDevice = async () => {
     try {      
-      const response = await fetch(API_DEVICE_REGISTRATION, {
+      console.log('🌐 Attempting to connect to:', config.API_DEVICE_REGISTRATION);
+      
+      const response = await fetch(config.API_DEVICE_REGISTRATION, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
+
+      console.log('🌐 Response status:', response.status);
+      console.log('🌐 Response ok:', response.ok);
 
       const data = await response.json();
       const dataObject = JSON.parse(data.content);
@@ -23,7 +28,9 @@ export const registerDevice = async () => {
 
       return false;
     } catch (e) {
-      console.error('Registration failed:', e);
+      console.error('❌ Device registration failed:');
+      console.error('❌ Error details:', e);
+      console.error('❌ API URL was:', config.API_DEVICE_REGISTRATION);
       return false;
     }
 }

@@ -1,5 +1,5 @@
 import * as i from '../../../Interfaces/interfaces';
-import { API_ALLOW_DELETE_DOMAIN, API_ALLOW_DELETE_APPLICATION } from '@env';
+import config from '../../../../config/environment';
 import {
   getPublicId,
   getPrivateId,
@@ -16,8 +16,8 @@ const encryptPrivateId = async (): Promise<string> => {
 // Function to handle domain login ~ access stored credentials for an domain
 export const Delete = async (qrJson: i.Delete)=> {
   const path = qrJson.type === 'delete-applications'
-    ? API_ALLOW_DELETE_APPLICATION
-    : API_ALLOW_DELETE_DOMAIN;
+    ? config.API_ALLOW_DELETE_APPLICATIONS
+    : config.API_ALLOW_DELETE_DOMAIN;
 
   try {
     // Extract and remove xExtensionAuthOne from qrJson

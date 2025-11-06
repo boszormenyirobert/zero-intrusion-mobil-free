@@ -1,5 +1,5 @@
 import * as i from '../../../Interfaces/interfaces';
-import { API_REGISTRATION, API_ALLOW_EDIT_APPLICATIONS } from '@env';
+import config from '../../../../config/environment';
 import {
   getPublicId,
   getPrivateId,
@@ -16,8 +16,8 @@ const encryptPrivateId = async (): Promise<string> => {
 // Function to handle domain registration ~ add new credentials to an domain
 export const Registration = async (qrJson: i.Registration) => {
   const path = qrJson.type === 'update-applications'
-    ? API_ALLOW_EDIT_APPLICATIONS
-    : API_REGISTRATION;
+    ? config.API_ALLOW_EDIT_APPLICATIONS
+    : config.API_REGISTRATION;
 
   try {
     const { xExtensionAuthOne, ...registrationData } = qrJson;
