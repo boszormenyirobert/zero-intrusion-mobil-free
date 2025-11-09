@@ -23,7 +23,7 @@ export const Delete = async (qrJson: i.Delete)=> {
     // Extract and remove xExtensionAuthOne from qrJson
     const { xExtensionAuthOne, ...loginData } = qrJson;
     const authToken = xExtensionAuthOne || "";
-
+    console.log('Login Body 1:', loginData);
     // Build request body with encrypted data
     const body: i.DeleteExtended = {
       ...loginData,
@@ -31,8 +31,6 @@ export const Delete = async (qrJson: i.Delete)=> {
       privateId: await encryptPrivateId(),
       email: await getEmail()
     };
-
-    console.log('Login Body:', body);
 
     // Make API request
     const response = await fetch(path, {

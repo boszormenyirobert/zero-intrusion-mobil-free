@@ -79,7 +79,7 @@ export interface AccessExtended
 
 export interface Delete {
   domain: string;
-  type: 'domain-delete'|'delete-applications';
+  type: 'domain-delete'|'delete-domain'|'delete-applications';
   source: string;  
   removeProcessId: string;
   xExtensionAuthOne: string;
