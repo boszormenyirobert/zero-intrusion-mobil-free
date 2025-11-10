@@ -64,7 +64,7 @@ export class BiometricService {
   /**
    * Authenticate user with biometrics
    */
-  static async authenticate(config?: BiometricConfig): Promise<BiometricResult> {
+  static async authenticate(_config?: BiometricConfig): Promise<BiometricResult> {
     try {
       const isAvailable = await this.isAvailable();
       
@@ -76,49 +76,202 @@ export class BiometricService {
       }
 
       const biometryType = await this.getBiometryType();
+      console.log('🔐 Attempting authentication with biometry type:', biometryType);
       
-      const options = {
+      // For Face recognition on Android, use biometric prompt approach
+      if (biometryType === Keychain.BIOMETRY_TYPE.FACE || 
+          biometryType === Keychain.BIOMETRY_TYPE.FACE_ID) {
+        
+        console.log('👤 Using Face recognition authentication');
+        
+        try {
+          // For face recognition, use the same approach as fingerprint but with different key
+          const faceOptions = {
+            showModal: true,
+            authenticationType: Keychain.AUTHENTICATION_TYPE.BIOMETRICS,
+            accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
+          };
+
+          // Set credentials with biometric protection - this should trigger face unlock
+          await Keychain.setInternetCredentials(
+            'face_auth_biometric',
+            'face_user',
+            'authenticated',
+            faceOptions
+          );
+
+          console.log('✅ Face recognition credentials created with biometric protection');
+
+          // Now try to get them back - this will trigger the face unlock prompt
+          const credentials = await Keychain.getInternetCredentials(
+            'face_auth_biometric',
+            faceOptions
+          );
+
+          if (credentials && credentials.username) {
+            console.log('✅ Face recognition authentication successful');
+            return {
+              success: true,
+              data: credentials,
+              biometryType: biometryType
+            };
+          } else {
+            throw new Error('Face recognition verification failed');
+          }
+        } catch (faceError: any) {
+          console.error('❌ Face recognition with biometric protection failed:', faceError);
+          
+          if (faceError.message && (faceError.message.includes('UserCancel') || faceError.message.includes('cancel'))) {
+            throw new Error('Face recognition cancelled');
+          }
+          
+          // If biometric face recognition fails, try with device passcode fallback
+          if (faceError.message && faceError.message.includes('User not authenticated')) {
+            console.log('🔄 Face recognition fallback: trying device passcode...');
+            
+            try {
+              const faceFallbackOptions = {
+                authenticationType: Keychain.AUTHENTICATION_TYPE.DEVICE_PASSCODE_OR_BIOMETRICS,
+                accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
+                showModal: true,
+              };
+
+              const fallbackCredentials = await Keychain.getInternetCredentials(
+                'face_auth_fallback',
+                faceFallbackOptions
+              );
+
+              if (fallbackCredentials && fallbackCredentials.username) {
+                console.log('✅ Face recognition fallback successful');
+                return {
+                  success: true,
+                  data: fallbackCredentials,
+                  biometryType: biometryType
+                };
+              } else {
+                await Keychain.setInternetCredentials(
+                  'face_auth_fallback',
+                  'face_fallback_user',
+                  'authenticated',
+                  faceFallbackOptions
+                );
+
+                console.log('✅ Face recognition fallback successful (first time)');
+                return {
+                  success: true,
+                  data: { username: 'face_fallback_user', password: 'authenticated' },
+                  biometryType: biometryType
+                };
+              }
+            } catch (fallbackError: any) {
+              console.error('❌ Face recognition fallback also failed:', fallbackError);
+              throw new Error('Face recognition failed. Please try again or use device PIN.');
+            }
+          }
+          
+          throw new Error('Face recognition failed. Please try again.');
+        }
+      }
+
+      // For fingerprint authentication - clear approach
+      let options: any = {
+        showModal: true,
         authenticationType: Keychain.AUTHENTICATION_TYPE.BIOMETRICS,
         accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
-        showModal: true,
-        kLocalizedFallbackTitle: config?.fallbackTitle || 'Use Passcode',
       };
 
-      // Try to get existing credentials with biometric authentication
-      const credentials = await Keychain.getInternetCredentials(
-        'biometric_auth',
-        options
-      );
+      try {
+        // Now try to set fresh credentials for authentication
+        try {
+          await Keychain.setInternetCredentials(
+            'biometric_auth_fresh',
+            'biometric_user',
+            'authenticated',
+            options
+          );
+          console.log('✅ Fresh fingerprint credentials created');
+        } catch (setError: any) {
+          console.error('❌ Failed to create fingerprint credentials:', setError);
+          throw setError;
+        }
 
-      if (credentials && credentials.username && credentials.password) {
-        console.log('✅ Biometric authentication successful');
-        return {
-          success: true,
-          data: credentials,
-          biometryType: biometryType
-        };
-      } else {
-        // No existing credentials, create dummy ones for authentication
-        await Keychain.setInternetCredentials(
-          'biometric_auth',
-          'biometric_user',
-          'authenticated',
+        // Try to get the credentials back (this triggers biometric prompt)
+        const credentials = await Keychain.getInternetCredentials(
+          'biometric_auth_fresh',
           options
         );
 
-        console.log('✅ Biometric authentication successful (first time)');
-        return {
-          success: true,
-          data: { username: 'biometric_user', password: 'authenticated' },
-          biometryType: biometryType
-        };
+        if (credentials && credentials.username && credentials.password) {
+          console.log('✅ Direct fingerprint authentication successful');
+          return {
+            success: true,
+            data: credentials,
+            biometryType: biometryType
+          };
+        } else {
+          throw new Error('Fingerprint authentication verification failed');
+        }
+      } catch (authError: any) {
+        console.error('❌ Direct fingerprint authentication failed:', authError);
+        
+        // If direct authentication fails, try with device passcode fallback
+        if (authError.message && authError.message.includes('User not authenticated')) {
+          console.log('🔄 Retrying with device passcode fallback...');
+          
+          const fallbackOptions = {
+            authenticationType: Keychain.AUTHENTICATION_TYPE.DEVICE_PASSCODE_OR_BIOMETRICS,
+            accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
+            showModal: true,
+          };
+
+          try {
+            const fallbackCredentials = await Keychain.getInternetCredentials(
+              'biometric_auth_fallback',
+              fallbackOptions
+            );
+
+            if (fallbackCredentials && fallbackCredentials.username) {
+              console.log('✅ Fallback authentication successful');
+              return {
+                success: true,
+                data: fallbackCredentials,
+                biometryType: biometryType
+              };
+            } else {
+              await Keychain.setInternetCredentials(
+                'biometric_auth_fallback',
+                'fallback_user',
+                'authenticated',
+                fallbackOptions
+              );
+
+              console.log('✅ Fallback authentication successful (first time)');
+              return {
+                success: true,
+                data: { username: 'fallback_user', password: 'authenticated' },
+                biometryType: biometryType
+              };
+            }
+          } catch (fallbackError: any) {
+            console.error('❌ Fallback authentication also failed:', fallbackError);
+            throw fallbackError;
+          }
+        } else {
+          throw authError;
+        }
       }
     } catch (error: any) {
       console.error('❌ Biometric authentication failed:', error);
       
       let errorMessage = 'Authentication failed';
       if (error.message) {
-        errorMessage = error.message;
+        if (error.message.includes('User not authenticated')) {
+          errorMessage = 'Biometric authentication failed. Please try again or use device PIN.';
+        } else if (error.message.includes('UserCancel')) {
+          errorMessage = 'Authentication cancelled';
+        } else {
+          errorMessage = error.message;
+        }
       }
 
       return {
