@@ -40,7 +40,8 @@ export const Registration = async (qrJson: i.Registration) => {
       privateId: await encryptPrivateId(),
       email: await getEmail(),
       userCredential: encryptedUserCredential,
-      update: qrJson.isNew,
+      update: qrJson.isNew,  
+      ...(qrJson.targetId && { targetId: qrJson.targetId }),
     };
 
     // Make API request

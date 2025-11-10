@@ -49,17 +49,19 @@ export interface Registration {
   xExtensionAuthOne: string;
   type: 'registration-domain'|'update-applications';
   source: string;
-  isNew: boolean;
+  isNew: string;
   description: string;
   domain: string;
   application: string | null;
+  targetId?: string;
 }
 
 export interface RegistrationExtended
   extends Omit<Registration, 'xExtensionAuthOne'>,
     UserProperties {
   userCredential: string;
-  update: boolean;
+  update: string;
+  targetId?: string;
 }
 
 export interface Access {
