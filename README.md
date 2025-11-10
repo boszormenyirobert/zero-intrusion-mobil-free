@@ -23,7 +23,7 @@ npm start
 cd android
 ./gradlew clean
 ./gradlew clean && ./gradlew assembleRelease -x externalNativeBuildDebug -x externalNativeBuildReleas 
-adb install android/app/build/outputs/apk/release/app-release.apk
+cd .. & adb install android/app/build/outputs/apk/release/app-release.apk
 ```
 --------
 
