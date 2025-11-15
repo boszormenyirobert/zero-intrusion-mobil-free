@@ -1,4 +1,5 @@
 import * as Keychain from 'react-native-keychain';
+import { Platform } from 'react-native';
 
 export interface DeviceAuthResult {
   success: boolean;
@@ -13,10 +14,29 @@ export interface DeviceAuthResult {
 export class DeviceAuthService {
   
   /**
-   * Device PIN/pattern is always available as fallback
+   * Device PIN/pattern is available as fallback when stronger auth is not available
+   * Only used when fingerprint authentication is not available
    */
   static async isAvailable(): Promise<boolean> {
-    return true; // Device PIN/pattern is always available
+    try {
+      // On Android, only use as fallback if fingerprint is not available
+      if (Platform.OS === 'android') {
+        const biometryType = await Keychain.getSupportedBiometryType();
+        const hasFingerprint = biometryType === Keychain.BIOMETRY_TYPE.FINGERPRINT || 
+                              biometryType === Keychain.BIOMETRY_TYPE.TOUCH_ID;
+        
+        // Only available as fallback when fingerprint is not available
+        const isAvailableAsFallback = !hasFingerprint;
+        console.log('🔢 DeviceAuth available as fallback on Android:', isAvailableAsFallback);
+        return isAvailableAsFallback;
+      }
+      
+      // On iOS, always available as fallback
+      return true;
+    } catch (error) {
+      console.error('❌ Error checking device auth availability:', error);
+      return true; // Fallback to always available in case of error
+    }
   }
 
   /**
@@ -25,11 +45,15 @@ export class DeviceAuthService {
   static async authenticate(): Promise<DeviceAuthResult> {
     try {
       console.log('🔢 Starting device PIN/pattern authentication...');
+      console.log('🔢 ===== DEVICE AUTH SERVICE IS RUNNING =====');
 
-      // Force device authentication by using access control
+      // Force device authentication with strong access control
       const options = {
         accessControl: Keychain.ACCESS_CONTROL.DEVICE_PASSCODE,
         showModal: true,
+        // Strong security - require fresh authentication
+        touchID: false,
+        biometryType: false,
       };
 
       try {

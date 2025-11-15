@@ -1,134 +1,135 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, Alert, Platform } from 'react-native';
 import MainScreen from './src/screen/main/Main';
-import BiometricService from './src/services/BiometricService';
-import FingerprintService from './src/services/FingerprintService';
-import FaceRecognitionService from './src/services/FaceRecognitionService';
-import DeviceAuthService from './src/services/DeviceAuthService';
+import StrongBiometricService from './src/services/StrongBiometricService';
+import EntryStyles from './src/Entry.style';
+import { COLORS } from './src/Colors.style';
 
 export default function HomeScreen() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [_biometricCapabilities, setBiometricCapabilities] = useState<any>(null);
   const [selectedAuthMethod, setSelectedAuthMethod] = useState<string | null>(null);
   const [availableAuthMethods, setAvailableAuthMethods] = useState<any[]>([]);
 
   useEffect(() => {
-    checkBiometricCapabilities();
+    checkStrongBiometricCapabilities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const checkBiometricCapabilities = async () => {
+  const performStrongBiometricAuthentication = async () => {
     try {
-      console.log('🔍 Checking biometric capabilities...');
-      const capabilities = await BiometricService.getCapabilities();
-      const fingerprintCap = await FingerprintService.getCapabilities();
-      const faceCap = await FaceRecognitionService.getCapabilities();
+      console.log('🔐 Starting automatic strong biometric authentication...');
+      setSelectedAuthMethod('auto_strong_biometric');
       
-      console.log('📱 Biometric capabilities:', capabilities);
-      console.log('👆 Fingerprint capabilities:', fingerprintCap);
-      console.log('👤 Face capabilities:', faceCap);
-      
-      setBiometricCapabilities(capabilities);
-      
-      // Build available authentication methods
-      const methods = [];
-      
-      // Check for fingerprint
-      if (fingerprintCap.isAvailable) {
-        methods.push({
-          id: 'fingerprint',
-          name: 'Fingerprint',
-          icon: '👆',
-          service: 'fingerprint'
-        });
-      }
-      
-      // Check for face recognition
-      if (faceCap.isAvailable) {
-        methods.push({
-          id: 'face',
-          name: 'Face Recognition',
-          icon: '👤',
-          service: 'face'
-        });
-      }
-      
-      // Check for pattern/PIN (always available as fallback)
-      methods.push({
-        id: 'pattern',
-        name: 'Device PIN/Pattern',
-        icon: '🔢',
-        service: 'pattern'
-      });
-      
-      setAvailableAuthMethods(methods);
-      console.log('📋 Available auth methods:', methods);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('❌ Biometric capabilities check failed:', error);
-      // Fallback to pattern only
-      setAvailableAuthMethods([{
-        id: 'pattern',
-        name: 'Device PIN/Pattern',
-        icon: '🔢',
-        service: 'pattern'
-      }]);
-      setIsLoading(false);
-    }
-  };
-
-  const handleAuthMethodSelect = async (method: any) => {
-    setSelectedAuthMethod(method.id);
-    try {
-      console.log('🚀 Starting authentication with:', method.name);
-      let result;
-
-      switch (method.service) {
-        case 'fingerprint':
-          console.log('� Using Fingerprint Service');
-          result = await FingerprintService.authenticate();
-          break;
-        case 'face':
-          console.log('� Using Face Recognition Service');
-          result = await FaceRecognitionService.authenticate();
-          break;
-        case 'pattern':
-          console.log('🔢 Using Device PIN/Pattern Service');
-          result = await DeviceAuthService.authenticate();
-          break;
-        default:
-          console.log('🔒 Using Generic Biometric Service');
-          result = await BiometricService.authenticate();
-          break;
-      }
-      
-      console.log('🔐 Authentication result:', result);
+      const result = await StrongBiometricService.authenticate();
+      console.log('🔐 Automatic strong biometric authentication result:', result);
       
       if (result.success) {
+        console.log('✅ AUTOMATIC STRONG BIOMETRIC authentication successful!');
         setIsAuthenticated(true);
       } else {
-        const errorMessage = result.error || 'Authentication failed';
-        console.error('❌ Authentication failed:', errorMessage);
+        const errorMessage = result.error || 'Strong biometric authentication failed';
+        console.error('❌ Automatic strong biometric authentication failed:', errorMessage);
         
         Alert.alert(
-          'Authentication Error',
+          'Strong Biometric Authentication Failed',
           errorMessage,
           [
-            { text: 'OK', style: 'cancel' }
+            { 
+              text: 'Retry', 
+              onPress: () => performStrongBiometricAuthentication() 
+            },
+            { 
+              text: 'Cancel', 
+              style: 'cancel',
+              onPress: () => setSelectedAuthMethod(null)
+            }
           ]
         );
       }
     } catch (error) {
-      console.error('❌ Authentication error:', error);
+      console.error('❌ Automatic strong biometric authentication error:', error);
       Alert.alert(
-        'Error',
-        'An error occurred during authentication',
+        'Authentication Error',
+        'An error occurred during automatic strong biometric authentication',
         [
-          { text: 'OK', style: 'cancel' }
+          { 
+            text: 'Retry', 
+            onPress: () => performStrongBiometricAuthentication() 
+          },
+          { 
+            text: 'Cancel', 
+            style: 'cancel',
+            onPress: () => setSelectedAuthMethod(null)
+          }
         ]
       );
-    } finally {
-      setSelectedAuthMethod(null);
+    }
+  };
+
+  const checkStrongBiometricCapabilities = async () => {
+    try {
+      console.log('🔍 Checking STRONG BIOMETRIC ONLY capabilities...');
+      
+      // Use the new StrongBiometricService for true strong biometric authentication
+      const strongBiometricCap = await StrongBiometricService.getCapabilities();
+      const isStrongBiometricAvailable = await StrongBiometricService.isAvailable();
+      
+      console.log('=== STRONG BIOMETRIC ONLY (react-native-biometrics) ===');
+      console.log('🔐 Strong biometric capabilities:', JSON.stringify(strongBiometricCap, null, 2));
+      console.log('🔐 Strong biometric available:', isStrongBiometricAvailable);
+      console.log('📱 Platform:', Platform.OS);
+      console.log('=== END DEBUG ===');
+      
+      // Build available authentication methods - STRONG BIOMETRIC ONLY
+      const methods = [];
+      
+      console.log('🔍 Building auth methods for STRONG BIOMETRIC ONLY mode...');
+      
+      // ONLY Strong Biometric allowed - no fallbacks for maximum security
+      if (isStrongBiometricAvailable && strongBiometricCap.isStrongBiometric) {
+        console.log('✅ Strong biometric available - STARTING AUTOMATIC AUTHENTICATION');
+        
+        // Automatically start strong biometric authentication
+        await performStrongBiometricAuthentication();
+        
+        methods.push({
+          id: 'strong_biometric_only',
+          name: 'Strong Biometric Only',
+          service: 'strong_biometric',
+          securityLevel: 'strong',
+          details: `${strongBiometricCap.biometryType} (Hardware-backed)`
+        });
+      } else {
+        // If strong biometric is not available, show error - no fallbacks allowed
+        console.log('❌ Strong biometric not available - ACCESS DENIED');
+        console.log('❌ Strong biometric available:', isStrongBiometricAvailable);
+        console.log('❌ Capabilities:', strongBiometricCap);
+        methods.push({
+          id: 'access_denied',
+          name: 'Strong Biometric Required',
+          service: 'none',
+          securityLevel: 'denied',
+          disabled: true,
+          details: 'Device does not support hardware-backed strong biometrics'
+        });
+      }
+      
+      setAvailableAuthMethods(methods);
+      console.log('📋 Available auth methods (STRONG BIOMETRIC ONLY):', methods);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('❌ Strong biometric capabilities check failed:', error);
+      // In Strong Biometric Only mode, if capabilities check fails, deny access
+      setAvailableAuthMethods([{
+        id: 'capability_error',
+        name: 'Strong Biometric Check Failed',
+        service: 'none',
+        securityLevel: 'denied',
+        disabled: true,
+        details: 'Failed to check strong biometric capabilities'
+      }]);
+      setIsLoading(false);
     }
   };
 
@@ -139,7 +140,24 @@ export default function HomeScreen() {
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <Text style={styles.loadingText}>Loading...</Text>
+        <Text style={styles.title}>ZeroIntrusion</Text>
+        <Text style={styles.loadingText}>Checking Strong Biometric Capabilities...</Text>
+      </View>
+    );
+  }
+
+  // If authentication is in progress
+  if (selectedAuthMethod) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>ZeroIntrusion</Text>
+        <Text style={styles.subtitle}>Strong Biometric Only Mode</Text>
+        <Text style={styles.authenticatingText}>
+          Authenticating with Strong Biometric...
+        </Text>
+        <Text style={styles.detailsText}>
+          Please authenticate using your fingerprint or TouchID
+        </Text>
       </View>
     );
   }
@@ -147,123 +165,154 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>ZeroIntrusion</Text>
-      <Text style={styles.subtitle}>Secure Access</Text>
+      <Text style={styles.subtitle}>Strong Biometric Only Mode</Text>
       
       {availableAuthMethods.length > 0 ? (
         <View style={styles.menuContainer}>
-          <Text style={styles.menuTitle}>Choose Authentication Method:</Text>
-          
           {availableAuthMethods.map((method) => (
-            <TouchableOpacity
-              key={method.id}
-              style={[
-                styles.authButton, 
-                selectedAuthMethod === method.id ? styles.selectedButton : null
-              ]}
-              onPress={() => handleAuthMethodSelect(method)}
-              disabled={selectedAuthMethod !== null}
-            >
-              <Text style={styles.authButtonText}>
-                {method.icon} {method.name}
+            <View key={method.id} style={styles.statusContainer}>
+              <Text style={styles.statusText}>
+                {method.name}
               </Text>
-            </TouchableOpacity>
+              {method.securityLevel === 'strong' && (
+                <Text style={styles.securityLevelText}>
+                  STRONG BIOMETRIC ONLY
+                </Text>
+              )}
+              {method.securityLevel === 'denied' && (
+                <Text style={styles.errorText}>
+                  DEVICE NOT COMPATIBLE
+                </Text>
+              )}
+              {method.details && (
+                <Text style={styles.detailsText}>
+                  {method.details}
+                </Text>
+              )}
+            </View>
           ))}
-          
-          {selectedAuthMethod && (
-            <Text style={styles.authenticatingText}>
-              Authenticating...
-            </Text>
-          )}
         </View>
       ) : (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>
-            No authentication methods available on this device
+            Strong Biometric authentication is required but not available on this device
           </Text>
-          <TouchableOpacity style={styles.authButton} onPress={() => setIsAuthenticated(true)}>
-            <Text style={styles.authButtonText}>Continue (test mode)</Text>
-          </TouchableOpacity>
+          <Text style={styles.errorText}>
+            Please ensure your device supports fingerprint/TouchID authentication with hardware security.
+          </Text>
         </View>
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    padding: 20,
+    ...EntryStyles.container,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
   },
   title: {
+    ...EntryStyles.headLine,
+    color: COLORS.white,
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: 'bold' as const,
     marginBottom: 10,
   },
   subtitle: {
+    ...EntryStyles.text,
     fontSize: 18,
-    color: '#666',
     marginBottom: 50,
+    textAlign: 'center' as const,
   },
   loadingText: {
+    ...EntryStyles.text,
     fontSize: 18,
-    color: '#666',
+    textAlign: 'center' as const,
   },
   menuContainer: {
-    width: '100%',
-    alignItems: 'center',
+    width: '100%' as const,
+    alignItems: 'center' as const,
   },
   menuTitle: {
+    ...EntryStyles.headLine,
+    color: COLORS.white,
     fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: '600' as const,
     marginBottom: 30,
-    textAlign: 'center',
   },
   authButton: {
-    backgroundColor: '#007AFF',
+    ...EntryStyles.cardContainer,
+    height: 'auto' as const,
     paddingHorizontal: 30,
     paddingVertical: 15,
     borderRadius: 25,
     marginTop: 15,
-    minWidth: 250,
+    minWidth: 250 as const,
+    justifyContent: 'center' as const,
+  },
+  strongSecurityButton: {
+    backgroundColor: COLORS.green,
+    borderColor: COLORS.green,
+  },
+  disabledButton: {
+    backgroundColor: COLORS.error,
+    borderColor: COLORS.error,
   },
   selectedButton: {
-    backgroundColor: '#FF9500',
-    opacity: 0.7,
+    backgroundColor: COLORS.yellow,
+    borderColor: COLORS.yellow,
   },
   authButtonText: {
-    color: 'white',
+    ...EntryStyles.text,
     fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: '600' as const,
+    textAlign: 'center' as const,
+  },
+  disabledButtonText: {
+    color: COLORS.weight_dark,
+  },
+  securityLevelText: {
+    ...EntryStyles.text,
+    fontSize: 12,
+    fontWeight: '500' as const,
+    textAlign: 'center' as const,
+    marginTop: 5,
+  },
+  detailsText: {
+    ...EntryStyles.text,
+    fontSize: 10,
+    textAlign: 'center' as const,
+    marginTop: 3,
+    fontStyle: 'italic' as const,
   },
   authenticatingText: {
+    ...EntryStyles.text,
     fontSize: 16,
-    color: '#007AFF',
     marginTop: 20,
-    fontStyle: 'italic',
+    fontStyle: 'italic' as const,
+    textAlign: 'center' as const,
   },
   errorContainer: {
-    alignItems: 'center',
+    alignItems: 'center' as const,
+    padding: 20,
   },
   errorText: {
+    ...EntryStyles.text,
     fontSize: 16,
-    color: '#FF6B6B',
-    textAlign: 'center',
+    textAlign: 'center' as const,
     marginBottom: 20,
   },
-  debugText: {
-    fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
-    marginTop: 10,
+  statusContainer: {
+    ...EntryStyles.cardContainer,
+    height: 'auto' as const,
+    marginTop: 15,
+    justifyContent: 'center' as const,
   },
-  testButton: {
-    backgroundColor: '#34C759',
-    marginTop: 10,
+  statusText: {
+    ...EntryStyles.text,
+    fontSize: 18,
+    fontWeight: '600' as const,
+    textAlign: 'center' as const,
   },
-});
+};

@@ -1,4 +1,5 @@
 import * as Keychain from 'react-native-keychain';
+import { Platform } from 'react-native';
 
 export interface FingerprintResult {
   success: boolean;
@@ -14,17 +15,24 @@ export class FingerprintService {
   
   /**
    * Check if fingerprint is available on device
+   * Only enabled on Android for strongest security
    */
   static async isAvailable(): Promise<boolean> {
     try {
+      // Only enable on Android platform for strongest security
+      if (Platform.OS !== 'android') {
+        console.log('👆 Fingerprint service only available on Android for security');
+        return false;
+      }
+
       const biometryType = await Keychain.getSupportedBiometryType();
       console.log('👆 Fingerprint biometry type:', biometryType);
       
-      // Only return true for fingerprint/touch ID, not face recognition
+      // Only accept fingerprint/touch ID for strongest security - no face recognition
       const isFingerprint = biometryType === Keychain.BIOMETRY_TYPE.FINGERPRINT || 
                            biometryType === Keychain.BIOMETRY_TYPE.TOUCH_ID;
       
-      console.log('👆 Is fingerprint available:', isFingerprint);
+      console.log('👆 Is fingerprint available (strongest security only):', isFingerprint);
       return isFingerprint;
     } catch (error) {
       console.error('❌ Error checking fingerprint availability:', error);
@@ -47,12 +55,15 @@ export class FingerprintService {
       }
 
       console.log('👆 Starting fingerprint authentication...');
+      console.log('👆 ===== FINGERPRINT SERVICE IS RUNNING =====');
 
-      // Use fingerprint-specific authentication only
-      const options = {
+      // Fingerprint authentication with strong biometric security
+      const options: any = {
         authenticationType: Keychain.AUTHENTICATION_TYPE.BIOMETRICS,
         accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
         showModal: true,
+        // Strong biometric - invalidate on biometry changes
+        invalidateOnEnrollment: true,
       };
 
       try {

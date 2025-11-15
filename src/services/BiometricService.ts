@@ -1,5 +1,5 @@
 import * as Keychain from 'react-native-keychain';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 
 export interface BiometricConfig {
   title?: string;
@@ -24,12 +24,25 @@ export class BiometricService {
   
   /**
    * Check if biometric authentication is available on device
+   * STRONG BIOMETRIC ONLY: Only fingerprint/TouchID allowed - NO FACE RECOGNITION
    */
   static async isAvailable(): Promise<boolean> {
     try {
       const biometryType = await Keychain.getSupportedBiometryType();
       console.log('🔐 Biometry type available:', biometryType);
-      return biometryType !== null;
+      
+      // STRONG BIOMETRIC ONLY MODE - Only fingerprint/TouchID allowed
+      if (Platform.OS === 'android') {
+        // On Android, ONLY fingerprint is allowed for strongest security
+        const isFingerprint = biometryType === Keychain.BIOMETRY_TYPE.FINGERPRINT;
+        console.log('🔐 Android fingerprint only (strong biometric):', isFingerprint);
+        return isFingerprint;
+      } else {
+        // On iOS, ONLY TouchID allowed for strongest security - NO FaceID
+        const isTouchID = biometryType === Keychain.BIOMETRY_TYPE.TOUCH_ID;
+        console.log('🔐 iOS TouchID only (strong biometric):', isTouchID);
+        return isTouchID;
+      }
     } catch (error) {
       console.error('❌ Error checking biometric availability:', error);
       return false;
@@ -78,106 +91,36 @@ export class BiometricService {
       const biometryType = await this.getBiometryType();
       console.log('🔐 Attempting authentication with biometry type:', biometryType);
       
-      // For Face recognition on Android, use biometric prompt approach
+      // Block face recognition for strongest security
       if (biometryType === Keychain.BIOMETRY_TYPE.FACE || 
           biometryType === Keychain.BIOMETRY_TYPE.FACE_ID) {
-        
-        console.log('👤 Using Face recognition authentication');
-        
-        try {
-          // For face recognition, use the same approach as fingerprint but with different key
-          const faceOptions = {
-            showModal: true,
-            authenticationType: Keychain.AUTHENTICATION_TYPE.BIOMETRICS,
-            accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
-          };
-
-          // Set credentials with biometric protection - this should trigger face unlock
-          await Keychain.setInternetCredentials(
-            'face_auth_biometric',
-            'face_user',
-            'authenticated',
-            faceOptions
-          );
-
-          console.log('✅ Face recognition credentials created with biometric protection');
-
-          // Now try to get them back - this will trigger the face unlock prompt
-          const credentials = await Keychain.getInternetCredentials(
-            'face_auth_biometric',
-            faceOptions
-          );
-
-          if (credentials && credentials.username) {
-            console.log('✅ Face recognition authentication successful');
-            return {
-              success: true,
-              data: credentials,
-              biometryType: biometryType
-            };
-          } else {
-            throw new Error('Face recognition verification failed');
-          }
-        } catch (faceError: any) {
-          console.error('❌ Face recognition with biometric protection failed:', faceError);
-          
-          if (faceError.message && (faceError.message.includes('UserCancel') || faceError.message.includes('cancel'))) {
-            throw new Error('Face recognition cancelled');
-          }
-          
-          // If biometric face recognition fails, try with device passcode fallback
-          if (faceError.message && faceError.message.includes('User not authenticated')) {
-            console.log('🔄 Face recognition fallback: trying device passcode...');
-            
-            try {
-              const faceFallbackOptions = {
-                authenticationType: Keychain.AUTHENTICATION_TYPE.DEVICE_PASSCODE_OR_BIOMETRICS,
-                accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
-                showModal: true,
-              };
-
-              const fallbackCredentials = await Keychain.getInternetCredentials(
-                'face_auth_fallback',
-                faceFallbackOptions
-              );
-
-              if (fallbackCredentials && fallbackCredentials.username) {
-                console.log('✅ Face recognition fallback successful');
-                return {
-                  success: true,
-                  data: fallbackCredentials,
-                  biometryType: biometryType
-                };
-              } else {
-                await Keychain.setInternetCredentials(
-                  'face_auth_fallback',
-                  'face_fallback_user',
-                  'authenticated',
-                  faceFallbackOptions
-                );
-
-                console.log('✅ Face recognition fallback successful (first time)');
-                return {
-                  success: true,
-                  data: { username: 'face_fallback_user', password: 'authenticated' },
-                  biometryType: biometryType
-                };
-              }
-            } catch (fallbackError: any) {
-              console.error('❌ Face recognition fallback also failed:', fallbackError);
-              throw new Error('Face recognition failed. Please try again or use device PIN.');
-            }
-          }
-          
-          throw new Error('Face recognition failed. Please try again.');
-        }
+        console.log('❌ Face recognition blocked for strongest security policy');
+        return {
+          success: false,
+          error: 'Face recognition disabled for security. Please use fingerprint or device PIN.',
+          biometryType: biometryType
+        };
       }
-
-      // For fingerprint authentication - clear approach
+      
+      // Only allow fingerprint/TouchID for strongest security
+      if (biometryType !== Keychain.BIOMETRY_TYPE.FINGERPRINT && 
+          biometryType !== Keychain.BIOMETRY_TYPE.TOUCH_ID) {
+        console.log('❌ Biometric type not allowed for strongest security:', biometryType);
+        return {
+          success: false,
+          error: 'Only fingerprint authentication allowed for strongest security',
+          biometryType: biometryType
+        };
+      }
+      
+      // For fingerprint authentication with strong biometric security
+      console.log('👆 Using fingerprint/TouchID authentication for strongest security');
       let options: any = {
         showModal: true,
         authenticationType: Keychain.AUTHENTICATION_TYPE.BIOMETRICS,
-        accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
+        accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
+        // Strong biometric - invalidate when biometry enrollment changes
+        invalidateOnEnrollment: true,
       };
 
       try {
@@ -460,6 +403,47 @@ export class BiometricService {
           iris: false,
         }
       };
+    }
+  }
+  /**
+   * Check if strong biometric authentication is supported
+   * STRONG BIOMETRIC ONLY: Only fingerprint/TouchID - NO FACE RECOGNITION
+   */
+  static async isStrongBiometricSupported(): Promise<boolean> {
+    try {
+      const biometryType = await this.getBiometryType();
+      
+      // STRONG BIOMETRIC ONLY - Only fingerprint/TouchID allowed, NO face recognition
+      if (Platform.OS === 'android') {
+        // On Android, only fingerprint is considered strong
+        const isStrongSupported = biometryType === Keychain.BIOMETRY_TYPE.FINGERPRINT;
+        console.log('🔐 Android strong biometric supported (fingerprint only):', isStrongSupported, 'Type:', biometryType);
+        return isStrongSupported;
+      } else {
+        // On iOS, only TouchID is considered strong - NO FaceID
+        const isStrongSupported = biometryType === Keychain.BIOMETRY_TYPE.TOUCH_ID;
+        console.log('🔐 iOS strong biometric supported (TouchID only):', isStrongSupported, 'Type:', biometryType);
+        return isStrongSupported;
+      }
+    } catch (error) {
+      console.error('❌ Error checking strong biometric support:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get biometric security level
+   */
+  static async getSecurityLevel(): Promise<'strong' | 'weak' | 'none'> {
+    try {
+      const isAvailable = await this.isAvailable();
+      if (!isAvailable) return 'none';
+      
+      const isStrong = await this.isStrongBiometricSupported();
+      return isStrong ? 'strong' : 'weak';
+    } catch (error) {
+      console.error('❌ Error checking security level:', error);
+      return 'none';
     }
   }
 }
