@@ -23,10 +23,16 @@ npm start
 cd android
 ./gradlew clean
 ./gradlew clean && ./gradlew assembleRelease -x externalNativeBuildDebug -x externalNativeBuildReleas 
-( taskkill /F /IM java.exe )
+( PS taskkill /F /IM java.exe )
 cd .. && adb install android/app/build/outputs/apk/release/app-release.apk
 ```
 --------
+# IF rm -rf node_moduls
+## Create a file : C:\ZeroIntrusion\node_modules\react-native\sdks\hermes-engine\version.properties with the content
+```
+# Hermes version
+VERSION=0.11.0
+```
 
 ```
    .\gradlew --stop

@@ -5,6 +5,15 @@ interface UserProperties {
   email: string;
 }
 
+export interface Clone {
+  publicId: string;
+  privateId: string;
+  secret: string;
+  email: string;
+  phone: string;
+  type: 'clone'
+}
+
 // Base interfaces for QR data
 export interface HubRegistration {
   corporateId: string;
@@ -97,7 +106,8 @@ export type QRData =
   | HubLogin
   | Registration
   | Access
-  | Delete;
+  | Delete
+  | Clone;
 
 export const Device = {
   publicId: 'string',

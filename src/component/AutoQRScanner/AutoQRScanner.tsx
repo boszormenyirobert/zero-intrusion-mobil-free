@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert, Button } from 'react-native';
 import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
 
 type AutoQRScannerProps = {
   onResult: (data: string) => void;
+  setView?: any;
 };
 
-export default function AutoQRScanner({ onResult }: AutoQRScannerProps) {
+export default function AutoQRScanner({ onResult, setView }: AutoQRScannerProps) {
   const [scanned, setScanned] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const device = useCameraDevice('back');
@@ -26,9 +27,11 @@ export default function AutoQRScanner({ onResult }: AutoQRScannerProps) {
     requestPermission();
   }, []);
 
+  
   const codeScanner = useCodeScanner({
     codeTypes: ['qr'],
     onCodeScanned: (codes) => {
+      console.log('Scanned codes:', codes);
       if (!scanned && codes.length > 0) {
         setScanned(true);
         onResult(codes[0].value || '');
@@ -70,7 +73,8 @@ export default function AutoQRScanner({ onResult }: AutoQRScannerProps) {
         codeScanner={codeScanner}
       />
       <View style={styles.overlay}>
-        <Text style={styles.text}>Scan QR Code Automatically</Text>
+        <Text style={styles.text}>Scan QR Code Automatically</Text>        
+        <Button title="Back" onPress={() => setView && setView('default')} />
       </View>
     </View>
   );

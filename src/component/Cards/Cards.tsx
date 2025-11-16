@@ -7,7 +7,7 @@ import '../../i18n';
 import { icons } from '../../services/Icons';
 
 type CardProps = {
-  type: 'scanCode' | 'pay' | 'reset' | 'biometric' | 'stop';
+  type: 'scanCode' | 'clone' | 'reset' | 'biometric' | 'stop';
   action: () => void;
   icon: keyof typeof icons;
   singleRow?: boolean;
@@ -39,10 +39,10 @@ export const Cards: React.FC<CardProps> = ({
             title: t('decline'),
             description: t('stop.description'),
         },
-        pay: {
-            title: t('pay.title'),
-            description: t('pay.description'),
-        },
+        clone: {
+            title: t('clone.title'),
+            description: t('clone.description'),
+        },        
         reset: {
             title: t('reset.title'),
             description: t('reset.description')

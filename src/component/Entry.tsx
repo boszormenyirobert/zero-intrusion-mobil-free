@@ -8,6 +8,7 @@ import AutoQRScanner from './AutoQRScanner/AutoQRScanner';
 import { handleQRScan } from '../services/HandleQRScan';
 import useFirebaseMessaging from '../services/Firebase';
 import UserRegistration from './UserRegistration/UserRegistration';
+import Clone from './Clone/Clone';
 import * as i from '../services/Interfaces/interfaces';
 
 export function ScanCode({
@@ -35,8 +36,8 @@ export function ScanCode({
   const handleResetDevelopment = async () => {
     setView('reset');
   }  
-  const handlePrepay = async () => {
-    console.log("handlePrepay");
+  const handleClone = async () => {
+     setView('clone'); 
   }
   const handleAllowAccess = async () => {
     // Only allow if buttons are enabled
@@ -84,9 +85,9 @@ return (
           icon="qr_code"
         />
         <Cards 
-          type="pay"
-          action={handlePrepay}
-          icon="pay"
+          type="clone"
+          action={handleClone}
+          icon="clone"
         />    
         <Cards 
           type="reset"
@@ -149,6 +150,14 @@ return (
       setView={setView}
       />
    )}
+
+   {/* Clone view */}
+   {view === 'clone' &&(
+      <Clone 
+        onResult={handleQRResult}
+        setView={setView}
+      />
+   )}   
   </>);
 }
 

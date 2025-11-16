@@ -25,16 +25,27 @@ export async function handleQRScan(data:string) {
     deleteApplications: handler.delete,
   };
 
+  // Clone device
+  const cloneRoutes = {
+    clone: handler.clone
+  }
+
   // Merge all route groups into handleRoute
   const handleRoute = {
     ...systemHubRoutes,
     ...domainRoutes,
     ...applicationRoutes,
+    ...cloneRoutes
   };
 
   try {
     const qrInput: i.QRData = JSON.parse(data);
     const routeHandler = handleRoute[toCamelCase(qrInput.type)];
+    if(routeHandler === 'clone'){
+      handler.clone(qrInput as i.Clone);
+      return;
+    }
+
     if (routeHandler) {
       const result = await routeHandler(qrInput);  
       console.log('Handled QR Result:', result);

@@ -5,9 +5,9 @@
     "title": "Scan QR Code",
     "description": "to the authentication"
   },
-  "pay": {
-    "title": "Prepay Now",
-    "description": "Prepay your subscription quickly and securely"
+  "clone": {
+    "title": "Clone Device",
+    "description": "Clone your device quickly and securely with bluetooth"
   },
   "reset": {
     "title": "Reset - Development",

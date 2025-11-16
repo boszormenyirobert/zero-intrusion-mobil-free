@@ -3,6 +3,7 @@ import {SystemHubRegistration, SystemHubLogin} from './SystemHub/SystemHub';
 import {Registration as SharedRegistration} from './PasswordManager/Shared/Registration';
 import {Access} from './PasswordManager/Shared/Access';
 import {Delete as DomainDelete} from './PasswordManager/Shared/Delete';
+import { registerDeviceAndUserByClone } from './registerDevice';
 
 export class RequestHandler {
   // Map for system_hub_registration -- and any other sites, which are registrated in the Hub(async API call)
@@ -30,4 +31,8 @@ export class RequestHandler {
   async delete(data: i.Delete): Promise<boolean> {
     return await DomainDelete(data);
   }
-} 
+
+  async clone(data: i.Clone): Promise<boolean> {
+    return await registerDeviceAndUserByClone(data);    
+  } 
+}

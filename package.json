@@ -27,7 +27,10 @@
     "react-native-biometrics": "^3.0.1",
     "react-native-get-random-values": "^2.0.0",
     "react-native-keychain": "^10.0.0",
+    "react-native-linear-gradient": "^2.8.3",
+    "react-native-qrcode-svg": "^6.3.20",
     "react-native-safe-area-context": "^5.5.2",
+    "react-native-svg": "^15.15.0",
     "react-native-vision-camera": "^4.7.2",
     "tweetnacl": "^1.0.3",
     "tweetnacl-util": "^0.15.1"
