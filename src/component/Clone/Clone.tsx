@@ -89,6 +89,9 @@ export default function Clone({ onResult, setView }: AutoQRScannerProps) {
             </View>
           </TouchableOpacity>
         ))}
+        <Text style={[styles.text, styles.confirmationText]}>
+          To complete the clone successfully, the user must confirm their email address, phone number, and accept the privacy policy.
+        </Text>
         <Pressable
           onPress={() => setView && setView('default')}
           style={({ pressed }) => [

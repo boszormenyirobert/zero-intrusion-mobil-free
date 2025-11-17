@@ -136,5 +136,11 @@ export default StyleSheet.create({
     bottom: 50, 
     width: '100%', 
     alignItems: 'center'
+  },
+  confirmationText:{
+    color: COLORS.white, 
+    fontSize: 16, 
+    textAlign: 'center',
+    marginTop: 50
   }
 });
