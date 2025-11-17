@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Button } from 'react-native';
+import { View, StyleSheet, Pressable, Text } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import * as deviceStrore from '../DeviceStore';
+import entryStyles from '../../Entry.style';
 
 type SenderProps = {
   setView?: (view: string) => void;
@@ -25,17 +26,25 @@ const Sender: React.FC<SenderProps> = ({ setView }) => {
 
   return (
     <View style={styles.container}>
-      {qrValue ? (
+      {qrValue && (
         <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 12 }}>
           <QRCode
             value={qrValue}
             size={300}
           />
         </View>
-      ) : null}
-      <View style={{ paddingTop: 50 }}>
-        <Button title="Back" onPress={() => setView && setView('default')} />
-      </View>
+      )}
+        <Pressable
+          onPress={() => setView && setView('default')}
+          style={({ pressed }) => [
+            entryStyles.button,
+            {
+              transform: [{ scale: pressed ? 0.95 : 1 }]
+            }
+          ]}
+        >
+          <Text style={[entryStyles.btnText]}>Back</Text>
+        </Pressable>
     </View>
   );
 };

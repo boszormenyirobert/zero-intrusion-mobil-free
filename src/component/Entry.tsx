@@ -139,7 +139,10 @@ return (
    {/* Scanner View */}
    {view === 'scanner' &&(
     <View style={styles.scannerContainer}>
-      <AutoQRScanner onResult={handleQRResult} />
+      <AutoQRScanner 
+        onResult={handleQRResult}
+        setView={setView} 
+      />
     </View>
    )}   
 

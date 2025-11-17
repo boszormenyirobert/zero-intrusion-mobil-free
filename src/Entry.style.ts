@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { COLORS } from './Colors.style';
+import { Button } from 'react-native/types_generated/index';
 
 export default StyleSheet.create({
   container: {
@@ -99,4 +100,17 @@ export default StyleSheet.create({
   scannerContainer: {
     flex: 1,
   },
+  button: {
+    padding: 10,
+    width: 150,
+    marginHorizontal: 'auto',
+    marginTop: 20,
+    backgroundColor: '#0055b9',
+    borderRadius: 8             
+  },
+  btnText:{
+    color: '#fff',
+    fontSize: 16,
+    textAlign: 'center',
+  }
 });

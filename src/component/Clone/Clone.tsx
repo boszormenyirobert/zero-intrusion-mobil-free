@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import styles from '../../Entry.style';
 import '../../i18n';
@@ -19,14 +19,14 @@ export default function Clone({ onResult, setView }: AutoQRScannerProps) {
 
   const options = {
     sender: {
-      title: 'Send data',
-      description: 'It shares your data securely via Bluetooth.',
-      icon: 'pay',
+      title: t('clone.sender.title'),
+      description: t('clone.sender.description'),
+      icon: 'qr_show',
     },
     receiver: {
-      title: t('allow'),
-      description: t('biometric.description'),
-      icon: 'reset',
+      title: t('clone.receiver.title'),
+      description: t('clone.receiver.description'),
+      icon: 'qr_read',
     },
   } as const;
 
@@ -65,7 +65,8 @@ export default function Clone({ onResult, setView }: AutoQRScannerProps) {
 
   return (
     <>
-      <View>
+      <View style={styles.container}>
+        <Text style={[styles.text, styles.capital,styles.headLine]}>{t('corporate')}</Text>  
         {Object.entries(options).map(([key, content]) => (
           <TouchableOpacity
             key={key}
@@ -88,6 +89,17 @@ export default function Clone({ onResult, setView }: AutoQRScannerProps) {
             </View>
           </TouchableOpacity>
         ))}
+        <Pressable
+          onPress={() => setView && setView('default')}
+          style={({ pressed }) => [
+            styles.button,
+            {
+              transform: [{ scale: pressed ? 0.95 : 1 }]
+            }
+          ]}
+        >
+          <Text style={[styles.btnText]}>Back</Text>
+        </Pressable>
       </View>
     </>
   );

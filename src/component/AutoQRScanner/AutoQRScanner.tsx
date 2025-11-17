@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Alert, Button } from 'react-native';
+import { View, Text, StyleSheet, Alert, Pressable } from 'react-native';
 import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
+import entryStyles from '../../Entry.style';
 
 type AutoQRScannerProps = {
   onResult: (data: string) => void;
@@ -73,9 +74,20 @@ export default function AutoQRScanner({ onResult, setView }: AutoQRScannerProps)
         codeScanner={codeScanner}
       />
       <View style={styles.overlay}>
-        <Text style={styles.text}>Scan QR Code Automatically</Text>        
-        <Button title="Back" onPress={() => setView && setView('default')} />
-      </View>
+        <Text style={styles.text}>Scan QR Code Automatically</Text>                
+      
+              <Pressable
+                onPress={() => setView && setView('default')}
+                style={({ pressed }) => [
+                  entryStyles.button,
+                  {
+                    transform: [{ scale: pressed ? 0.95 : 1 }]
+                  }
+                ]}
+              >
+                <Text style={[entryStyles.btnText]}>Back</Text>
+              </Pressable>
+              </View>
     </View>
   );
 }
@@ -85,10 +97,9 @@ const styles = StyleSheet.create({
   overlay: {
     position: 'absolute',
     bottom: 40,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignSelf: 'center',    
     padding: 10,
     borderRadius: 8,
   },
-  text: { color: '#fff', fontSize: 16, textAlign: 'center' },
+  text: { color: '#fff', fontSize: 16, textAlign: 'center',marginBottom: 10},
 });

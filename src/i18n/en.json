@@ -7,7 +7,15 @@
   },
   "clone": {
     "title": "Clone Device",
-    "description": "Clone your device quickly and securely with bluetooth"
+    "description": "Clone your device quickly and securely with bluetooth",
+    "sender": {
+      "title": "Share secret",
+      "description": "Securely transfer your device data using an encrypted QR code."
+    },
+    "receiver": {
+      "title": "Receive secret",
+      "description": "Scan a QR code to securely import device data."
+    }
   },
   "reset": {
     "title": "Reset - Development",
@@ -19,5 +27,5 @@
     "emailPlaceholder": "Enter your email address",
     "phonePlaceholder": "Enter your phone number",
     "acceptTerms": "I accept that my data will be stored securely for account recovery purposes."
-  }
+  } 
 }
