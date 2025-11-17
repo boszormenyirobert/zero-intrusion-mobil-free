@@ -30,7 +30,7 @@ export default StyleSheet.create({
     color: COLORS.white
   },
   subLine: {
-    fontSize: 24,
+    fontSize: 20,
     marginBottom: 20,
     textAlign: 'justify',
     color:COLORS.white,

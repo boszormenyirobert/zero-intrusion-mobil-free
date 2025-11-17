@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, TextInput, Button, Text, Switch, ScrollView } from 'react-native';
+import { View, TextInput, Button, Text, Switch, ScrollView, Pressable } from 'react-native';
 import getEncryptedIdentification from '../../services/Encrypter';
 import { registerUser } from '../../services/HTTP/registerUser';
 import { getFcmToken } from '../../services/Firebase';
@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import * as i from '../../services/Interfaces/interfaces';
 import * as Device from '../../services/DeviceStore';
+import EntryStyle from '../../Entry.style';
 
 export default function UserRegistration({
   setValidUser,
@@ -79,12 +80,23 @@ export default function UserRegistration({
         onChangeText={setPhone}
       />
 
-      <View >
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <Switch value={accepted} onValueChange={setAccepted} />
         <Text style={styles.accept}>{t('registration.acceptTerms')}</Text>
       </View>
 
-      <Button title="Regisztráció" onPress={handleSubmit} />
+        <Pressable
+          onPress={handleSubmit}
+          style={({ pressed }) => [
+            EntryStyle.button,
+            {
+              transform: [{ scale: pressed ? 0.95 : 1 }]
+            }
+          ]}
+        >
+          <Text style={[EntryStyle.btnText]}>Back</Text>
+        </Pressable>        
+     
     </ScrollView>
   );
 }
