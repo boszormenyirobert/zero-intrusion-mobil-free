@@ -1,5 +1,5 @@
 import React, { useRef,useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Alert, Pressable, Animate, Animated } from 'react-native';
+import { View, Text, StyleSheet, Alert, Pressable, Animated } from 'react-native';
 import {
   Camera,
   useCameraDevice,
