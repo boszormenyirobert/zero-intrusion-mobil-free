@@ -116,5 +116,25 @@ export default StyleSheet.create({
      backgroundColor: COLORS.white,
      padding: 20, 
      borderRadius: 12
+  },
+  animatedViewContainer:{
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  animatedView:{
+    width: 250,
+    height: 250,
+    borderWidth: 2,
+    borderColor: '#fff',
+    borderRadius: 16,
+    borderStyle: 'dashed',
+    backgroundColor: 'transparent'
+  },
+  backContainer:{
+    position: 'absolute', 
+    bottom: 50, 
+    width: '100%', 
+    alignItems: 'center'
   }
 });

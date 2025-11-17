@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Alert, Pressable } from 'react-native';
+import React, { useRef,useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Alert, Pressable, Animate, Animated } from 'react-native';
 import {
   Camera,
   useCameraDevice,
@@ -19,6 +19,7 @@ export default function AutoQRScanner({
   const [scanned, setScanned] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const device = useCameraDevice('back');
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const requestPermission = async () => {
@@ -34,6 +35,23 @@ export default function AutoQRScanner({
     };
     requestPermission();
   }, []);
+
+    useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.05,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  });
 
   const codeScanner = useCodeScanner({
     codeTypes: ['qr'],
@@ -71,23 +89,36 @@ export default function AutoQRScanner({
     );
   }
 
-  return (
-    <View style={styles.container}>
+ return (
+    <View style={{ flex: 1 }}>
       <Camera
         style={StyleSheet.absoluteFill}
         device={device}
         isActive={true}
         codeScanner={codeScanner}
       />
-      <View style={styles.overlay}>
-        <Text style={styles.text}>Scan QR Code Automatically</Text>
+
+      {/* Overlay */}
+      <View style={StyleSheet.absoluteFill}>
+        <View style={entryStyles.animatedViewContainer}>
+          <Animated.View
+            style={[
+              entryStyles.animatedView,
+              { transform: [{ scale: scaleAnim }] }
+            ]}
+          />
+        </View>
+      </View>
+
+      {/* Back gomb */}
+      <View style={[entryStyles.backContainer]}>
         <Pressable
           onPress={() => setView && setView('default')}
           style={({ pressed }) => [
             entryStyles.button,
             {
-              transform: [{ scale: pressed ? 0.95 : 1 }],
-            },
+              transform: [{ scale: pressed ? 0.95 : 1 }]
+            }
           ]}
         >
           <Text style={[entryStyles.btnText]}>Back</Text>
