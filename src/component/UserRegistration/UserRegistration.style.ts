@@ -7,14 +7,17 @@ export default StyleSheet.create({
     paddingBottom:50,
     marginTop: 0,
     marginBottom: 50,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.dark,
   },
   input: {
     borderWidth: 2,
-    borderColor: COLORS.black,
+    borderColor: COLORS.white,
     borderRadius: 5,
     padding: 12,
+    paddingLeft: 16, 
     marginBottom: 15,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    color: COLORS.white    
   },
   switchContainer: {
     flexDirection: 'row',
@@ -24,16 +27,16 @@ export default StyleSheet.create({
     fontSize: 24,
     marginBottom: 20,
     textAlign: 'center',
-    color: COLORS.weight_dark
+    color: COLORS.white
   },
   subLine: {
     fontSize: 24,
     marginBottom: 20,
     textAlign: 'justify',
-    color:COLORS.weight_dark
+    color:COLORS.white,
   },
   accept: {
     marginLeft: 8,
-    color: COLORS.weight_dark,
+    color: COLORS.white,
   },
 });

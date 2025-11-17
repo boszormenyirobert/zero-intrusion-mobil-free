@@ -63,7 +63,7 @@ export default function UserRegistration({
       <TextInput
         style={styles.input}
         placeholder={t('registration.emailPlaceholder')}
-        placeholderTextColor={COLORS.weight_dark}
+        placeholderTextColor={COLORS.white}
         keyboardType="email-address"
         autoCapitalize="none"
         value={email}
@@ -73,7 +73,7 @@ export default function UserRegistration({
       <TextInput
         style={styles.input}
         placeholder={t('registration.phonePlaceholder')}
-        placeholderTextColor={COLORS.weight_dark}
+        placeholderTextColor={COLORS.white}
         keyboardType="phone-pad"
         value={phone}
         onChangeText={setPhone}
