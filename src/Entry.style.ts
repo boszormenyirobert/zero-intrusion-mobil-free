@@ -1,6 +1,5 @@
 import { StyleSheet } from 'react-native';
 import { COLORS } from './Colors.style';
-import { Button } from 'react-native/types_generated/index';
 
 export default StyleSheet.create({
   container: {
@@ -105,16 +104,16 @@ export default StyleSheet.create({
     width: 150,
     marginHorizontal: 'auto',
     marginTop: 20,
-    backgroundColor: '#0055b9',
+    backgroundColor: COLORS.blue,
     borderRadius: 8             
   },
   btnText:{
-    color: '#fff',
+    color: COLORS.white,
     fontSize: 16,
     textAlign: 'center',
   },
   qrBorder:{
-     backgroundColor: '#fff', 
+     backgroundColor: COLORS.white,
      padding: 20, 
      borderRadius: 12
   }

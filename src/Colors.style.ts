@@ -7,6 +7,7 @@ export const COLORS = {
     white : '#FFFFFF',
 
     yellow: '#ffea00ff',
+    blue: '#09223fff',
     green: '#21e24bff',
-    error: '#580000'
+    error: '#580000'    
 };
