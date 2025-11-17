@@ -27,7 +27,7 @@ const Sender: React.FC<SenderProps> = ({ setView }) => {
   return (
     <View style={styles.container}>
       {qrValue && (
-        <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 12 }}>
+        <View style={entryStyles.qrBorder}>
           <QRCode
             value={qrValue}
             size={300}

@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Alert, Pressable } from 'react-native';
-import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
+import {
+  Camera,
+  useCameraDevice,
+  useCodeScanner,
+} from 'react-native-vision-camera';
 import entryStyles from '../../Entry.style';
 
 type AutoQRScannerProps = {
@@ -8,7 +12,10 @@ type AutoQRScannerProps = {
   setView?: any;
 };
 
-export default function AutoQRScanner({ onResult, setView }: AutoQRScannerProps) {
+export default function AutoQRScanner({
+  onResult,
+  setView,
+}: AutoQRScannerProps) {
   const [scanned, setScanned] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const device = useCameraDevice('back');
@@ -21,17 +28,16 @@ export default function AutoQRScanner({ onResult, setView }: AutoQRScannerProps)
         Alert.alert(
           'Camera Permission Denied',
           'Please enable camera access in settings to scan QR codes.',
-          [{ text: 'OK' }]
+          [{ text: 'OK' }],
         );
       }
     };
     requestPermission();
   }, []);
 
-  
   const codeScanner = useCodeScanner({
     codeTypes: ['qr'],
-    onCodeScanned: (codes) => {
+    onCodeScanned: codes => {
       console.log('Scanned codes:', codes);
       if (!scanned && codes.length > 0) {
         setScanned(true);
@@ -74,20 +80,19 @@ export default function AutoQRScanner({ onResult, setView }: AutoQRScannerProps)
         codeScanner={codeScanner}
       />
       <View style={styles.overlay}>
-        <Text style={styles.text}>Scan QR Code Automatically</Text>                
-      
-              <Pressable
-                onPress={() => setView && setView('default')}
-                style={({ pressed }) => [
-                  entryStyles.button,
-                  {
-                    transform: [{ scale: pressed ? 0.95 : 1 }]
-                  }
-                ]}
-              >
-                <Text style={[entryStyles.btnText]}>Back</Text>
-              </Pressable>
-              </View>
+        <Text style={styles.text}>Scan QR Code Automatically</Text>
+        <Pressable
+          onPress={() => setView && setView('default')}
+          style={({ pressed }) => [
+            entryStyles.button,
+            {
+              transform: [{ scale: pressed ? 0.95 : 1 }],
+            },
+          ]}
+        >
+          <Text style={[entryStyles.btnText]}>Back</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -97,9 +102,9 @@ const styles = StyleSheet.create({
   overlay: {
     position: 'absolute',
     bottom: 40,
-    alignSelf: 'center',    
+    alignSelf: 'center',
     padding: 10,
     borderRadius: 8,
   },
-  text: { color: '#fff', fontSize: 16, textAlign: 'center',marginBottom: 10},
+  text: { color: '#fff', fontSize: 16, textAlign: 'center', marginBottom: 10 },
 });

@@ -112,5 +112,10 @@ export default StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     textAlign: 'center',
+  },
+  qrBorder:{
+     backgroundColor: '#fff', 
+     padding: 20, 
+     borderRadius: 12
   }
 });
