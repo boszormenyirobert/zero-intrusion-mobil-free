@@ -1,7 +1,7 @@
 import 'react-native-get-random-values';
 import { getPrivateId, getPublicId, getSecret } from './DeviceStore';
 import nacl from 'tweetnacl';
-import { encodeBase64, decodeUTF8 } from 'tweetnacl-util';
+import { encodeBase64, decodeUTF8, decodeBase64, encodeUTF8} from 'tweetnacl-util';
 import blake2b from 'blake2b';
 import * as i from './Interfaces/interfaces';
 
@@ -47,3 +47,31 @@ async function encryptToBase64(message: string, secret: string): Promise<string>
 
 // Export the function for use in other files
 export { encryptToBase64 };
+
+export async function decryptFromBase64(cipherTextBase64: string, secret: string): Promise<string | null> {
+  try {
+    // 1. Dekódold base64-ről Uint8Array-re
+    const combined = decodeBase64(cipherTextBase64);
+
+    // 2. Vedd le a nonce-t (első 24 byte)
+    const nonce = combined.slice(0, 24);
+
+    // 3. A maradék a titkosított üzenet
+    const cipher = combined.slice(24);
+
+    // 4. Készítsd el a kulcsot ugyanúgy, mint encryptnél
+    const secretBytes = decodeUTF8(secret);
+    const keyArray = blake2b(32).update(secretBytes).digest();
+
+    // 5. Dekódold
+    const decrypted = nacl.secretbox.open(cipher, nonce, keyArray);
+
+    if (!decrypted) return null; // Sikertelen dekódolás
+
+    // 6. Visszaalakítás stringgé
+    return encodeUTF8(decrypted);
+  } catch (e) {
+    console.error('Decryption error:', e);
+    return null;
+  }
+}

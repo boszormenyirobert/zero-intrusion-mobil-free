@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, TextInput, Button, Text, Switch, ScrollView, Pressable } from 'react-native';
+import { View, TextInput, Text, Switch, ScrollView, Pressable } from 'react-native';
 import getEncryptedIdentification from '../../services/Encrypter';
 import { registerUser } from '../../services/HTTP/registerUser';
 import { getFcmToken } from '../../services/Firebase';
@@ -94,7 +94,7 @@ export default function UserRegistration({
             }
           ]}
         >
-          <Text style={[EntryStyle.btnText]}>Back</Text>
+          <Text style={[EntryStyle.btnText]}>{t('registration.accept')}</Text>
         </Pressable>        
      
     </ScrollView>

@@ -85,7 +85,8 @@ export interface Access {
 export interface AccessExtended
   extends Omit<Access, 'xExtensionAuthOne'>,
     UserProperties {
-      update: false
+      update: false,
+      credentials: string[];
     }
 
 export interface Delete {
@@ -100,6 +101,11 @@ export interface DeleteExtended
   extends Omit<Delete, 'xExtensionAuthOne'>,
     UserProperties {}
 
+export interface UserCredentialDecryption {
+  type: 'user-credential-decryption';
+  credentials: string[];
+}
+    
 // Union type for all QR data types
 export type QRData =
   | HubRegistration
@@ -107,7 +113,8 @@ export type QRData =
   | Registration
   | Access
   | Delete
-  | Clone;
+  | Clone
+  | UserCredentialDecryption;
 
 export const Device = {
   publicId: 'string',

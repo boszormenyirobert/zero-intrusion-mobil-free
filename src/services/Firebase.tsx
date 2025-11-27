@@ -2,6 +2,8 @@ import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {useEffect} from 'react';
 import { handleQRScan } from './HandleQRScan';
+import { decryptFromBase64 } from './Encrypter';
+import { getSecret } from './DeviceStore';
 
 // Function to get or request FCM token
 export async function getFcmToken() {
@@ -62,6 +64,30 @@ export default function useFirebaseMessaging(
   useEffect(() => {
     const unsubscribeMessage = messaging().onMessage(async remoteMessage => {
       const {action, qrData} = remoteMessage.data;
+
+          let parsedQR: any;
+          if (typeof qrData === 'string') {
+            parsedQR = JSON.parse(qrData);
+          } else {
+            parsedQR = qrData;
+          }
+         
+          if (parsedQR.type === 'user-credential-decryption') {
+            let credentials = parsedQR.credentials;
+            const decryptedCredentials: string[] = [];
+            for (const credential of credentials) {
+              const encryptedValue = await decryptFromBase64(credential, await getSecret());
+              if (encryptedValue !== null) {
+                decryptedCredentials.push(encryptedValue);
+              }
+            };
+            // Send back to the server
+            // need targetId from somewhere
+            console.log(`Value decrypted: ${decryptedCredentials}`);
+            return () => {              
+              unsubscribeMessage();     
+            };
+          }
 
       if (action === 'show_allow_close') {
         // Activate notification and enable buttons
