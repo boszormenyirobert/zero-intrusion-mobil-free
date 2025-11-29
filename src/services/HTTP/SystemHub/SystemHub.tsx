@@ -7,7 +7,7 @@ import { encryptToBase64 } from '../../Encrypter';
 const generatedSecret = (): string => {
   const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}<>?.";
   let result = '';
-  for (let i = 0; i < 14; i++) {
+  for (let index = 0; index < 14; index++) {
     result += charset[Math.floor(Math.random() * charset.length)];
   }
   return result;
