@@ -29,7 +29,8 @@ export const Access = async (qrJson: i.Access)=> {
                   {
                     'credential':decryptedCredential,
                     'targetId': domain.targetId,
-                    'description':  domain.description
+                    'description':  domain.description,
+                    'application': domain?.application
                   }
                 );
               }
@@ -83,9 +84,13 @@ export const Access = async (qrJson: i.Access)=> {
   }
 };
 
-async function getEncryptedCredentials(qrJson: i.Access){
-  const path = config.API_DECRYPTED_CREDENTIALS;
+async function getEncryptedCredentials(qrJson: any){
   
+  console.log(qrJson.type);
+   const path = qrJson.type === 'domain-login'
+    ? config.API_DECRYPTED_CREDENTIALS
+    : config.API_DECRYPTED_APPLICATIONS_CREDENTIALS;
+   
   try {
     // Extract and remove xExtensionAuthOne from qrJson
     const { xExtensionAuthOne, ...loginData } = qrJson;
@@ -118,6 +123,8 @@ async function getEncryptedCredentials(qrJson: i.Access){
     }
 
     const result = await response.json();
+        console.log('User applications credentials fetched:', result);
+
     return result;
 
   } catch (error) {

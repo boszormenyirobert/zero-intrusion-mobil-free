@@ -1,0 +1,31 @@
+{
+  "corporate": "Zero Intrusion Lock and Encrypted Layers",
+  "rights": "All rights reserver 10.09.2025 by Zero Intrusion Lock and Layered Encryption",
+  "scanQRCode": {
+    "title": "Scan QR Code",
+    "description": "to the authentication"
+  },
+  "clone": {
+    "title": "Clone Device",
+    "description": "Clone your device quickly and securely with bluetooth",
+    "sender": {
+      "title": "Share secret",
+      "description": "Securely transfer your device data using an encrypted QR code."
+    },
+    "receiver": {
+      "title": "Receive secret",
+      "description": "Scan a QR code to securely import device data."
+    }
+  },
+  "reset": {
+    "title": "Reset - Development",
+    "description": "Reset your device registration if needed."
+  } ,
+  "registration":  {
+    "title": "Device Registration",
+    "description": "This information is used exclusively to recover your account if you lose /n  or change your device. Therefore, you agree that this confidential information will be securely stored in a strongly protected database and will never be shared with any third party under any circumstances.",
+    "emailPlaceholder": "Enter your email address",
+    "phonePlaceholder": "Enter your phone number",
+    "acceptTerms": "I accept that my data will be stored securely for account recovery purposes."
+  } 
+}
