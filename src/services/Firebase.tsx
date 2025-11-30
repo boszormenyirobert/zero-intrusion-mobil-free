@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {useEffect} from 'react';
 import { handleQRScan } from './HandleQRScan';
 import { decryptFromBase64 } from './Encrypter';
-import { getSecret } from './DeviceStore';
+import { getCredentialSecret } from './DeviceStore';
 
 // Function to get or request FCM token
 export async function getFcmToken() {
@@ -76,14 +76,11 @@ export default function useFirebaseMessaging(
             let credentials = parsedQR.credentials;
             const decryptedCredentials: string[] = [];
             for (const credential of credentials) {
-              const encryptedValue = await decryptFromBase64(credential, await getSecret());
+              const encryptedValue = await decryptFromBase64(credential, await getCredentialSecret());
               if (encryptedValue !== null) {
                 decryptedCredentials.push(encryptedValue);
               }
-            };
-            // Send back to the server
-            // need targetId from somewhere
-            console.log(`Value decrypted: ${decryptedCredentials}`);
+            };           
             return () => {              
               unsubscribeMessage();     
             };

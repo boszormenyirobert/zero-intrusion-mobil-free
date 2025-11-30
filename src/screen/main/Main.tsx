@@ -13,6 +13,7 @@ import {
   getSecret,
   getEmail,
   getPhone,
+  getCredentialSecret,
 } from '../../services/DeviceStore';
 import { getFcmToken } from './../../services/Firebase';
 
@@ -33,6 +34,7 @@ export default function MainScreen() {
       const privateId = await getPrivateId();
       const publicId = await getPublicId();
       const secret = await getSecret();
+      const credentialSecret = await getCredentialSecret();
       const fcmToken = await getFcmToken();
       const email = await getEmail();
       const phone = await getPhone();
@@ -40,6 +42,7 @@ export default function MainScreen() {
       console.log('privateId from storage !!! :', privateId);
       console.log('publicId from storage !!! :', publicId);
       console.log('secret from storage !!! :', secret);
+      console.log('credentialSecret from storage !!! :', credentialSecret);
       console.log('fcmToken from storage !!! :', fcmToken);
       console.log('email from storage !!! :', email);
       console.log('phone from storage !!! :', phone);

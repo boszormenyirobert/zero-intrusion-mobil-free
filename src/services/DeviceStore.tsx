@@ -25,10 +25,24 @@ const getPrivateId = async (): Promise<string | null> => {
     return null;
   }
 };
-
+// Integrity secret
 const getSecret = async (): Promise<string | null> => {
   try {
     const credentials = await Keychain.getInternetCredentials('secret');
+    if (credentials) {
+      return credentials.password;  
+    }
+    return null;
+  } catch (error) {
+    console.error('Error retrieving privateId:', error);
+    return null;
+  }
+};
+
+// Integrity secret
+const getCredentialSecret = async (): Promise<string | null> => {
+  try {
+    const credentials = await Keychain.getInternetCredentials('credentialSecret');
     if (credentials) {
       return credentials.password;  
     }
@@ -66,4 +80,4 @@ const getPhone = async (): Promise<string | null> => {
 };
 
 
-export { getPrivateId, getPublicId, getSecret, getEmail, getPhone };
+export { getPrivateId, getPublicId, getSecret, getEmail, getPhone, getCredentialSecret };

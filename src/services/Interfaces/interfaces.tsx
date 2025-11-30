@@ -122,7 +122,8 @@ export const Device = {
   email : 'string',
   phone : 'string' ,
   privacyPolicy : false,
-  fcmToken: 'string'
+  fcmToken: 'string',
+  credentialSecret: 'string'
 };
 
 export type UserRegistrationProps = {

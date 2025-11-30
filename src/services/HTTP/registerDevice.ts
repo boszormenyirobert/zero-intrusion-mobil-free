@@ -18,13 +18,13 @@ export const registerDevice = async () => {
 
       const data = await response.json();
       const dataObject = JSON.parse(data.content);
-            console.log(dataObject);
-      const { publicId, privateId, secret } = dataObject.privateSecret;
+      const { publicId, privateId, secret, credentialSecret } = dataObject.privateSecret;
 
       if (publicId && privateId && secret) {
         await Keychain.setInternetCredentials('publicId', 'user', publicId);
         await Keychain.setInternetCredentials('privateId', 'user', privateId);
         await Keychain.setInternetCredentials('secret', 'user', secret);
+        await Keychain.setInternetCredentials('credentialSecret', 'user', credentialSecret);
         return true;
       }
 

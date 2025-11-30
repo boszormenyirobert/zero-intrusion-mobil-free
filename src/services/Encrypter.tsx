@@ -1,5 +1,5 @@
 import 'react-native-get-random-values';
-import { getPrivateId, getPublicId, getSecret } from './DeviceStore';
+import { getCredentialSecret, getPrivateId, getPublicId, getSecret } from './DeviceStore';
 import nacl from 'tweetnacl';
 import { encodeBase64, decodeUTF8, decodeBase64, encodeUTF8} from 'tweetnacl-util';
 import blake2b from 'blake2b';
@@ -8,6 +8,7 @@ import * as i from './Interfaces/interfaces';
 export default async function getEncryptedIdentification(): Promise<typeof i.Device> {
   const privateId = await getPrivateId();          
   const secret = await getSecret();
+  const credentialSecret = await getCredentialSecret();
   const publicId = await getPublicId();
 
   const encryptedUserPrivateId = await encryptToBase64(privateId, secret);
@@ -18,7 +19,8 @@ export default async function getEncryptedIdentification(): Promise<typeof i.Dev
     email : '',
     phone : '' ,
     privacyPolicy : false,
-    fcmToken: ''
+    fcmToken: '',
+    credentialSecret: credentialSecret
   };
 }
 

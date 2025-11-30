@@ -5,6 +5,7 @@ import {
   getPrivateId,
   getSecret,
   getEmail,
+  getCredentialSecret,
 } from '../../../DeviceStore';
 import { encryptToBase64 } from '../../../Encrypter';
 
@@ -30,7 +31,7 @@ export const Registration = async (qrJson: i.Registration) => {
 
     const encryptedUserCredential: string = await encryptToBase64(
       JSON.stringify(secretMessage),
-      await getSecret(),
+      await getCredentialSecret(),
     );
 
     // Build request body with encrypted data

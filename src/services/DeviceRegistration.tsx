@@ -2,7 +2,7 @@ import * as Keychain from 'react-native-keychain';
 import { registerDevice } from './HTTP/registerDevice';
 
 class DeviceRegistration {
-  keys = ['publicId', 'privateId', 'secret'];
+  keys = ['publicId', 'privateId', 'secret', 'credentialSecret'];
 
   // Verify device registration, if not registered, register it
   async initialize() {    

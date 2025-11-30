@@ -5,6 +5,7 @@ import {
   getPrivateId,
   getSecret,
   getEmail,
+  getCredentialSecret,
 } from '../../../DeviceStore';
 import { encryptToBase64, decryptFromBase64 } from '../../../Encrypter';
 
@@ -15,15 +16,12 @@ const encryptPrivateId = async (): Promise<string> => {
 
 // Function to handle domain login ~ access stored credentials for an domain
 export const Access = async (qrJson: i.Access)=> {
-  // Request to the API to get the encrypted credentials list
-  // Decrypt it and add to the second request body and send back to the API
+  // Request the users-encrypted credentials list
   const encryptedCredentials = await getEncryptedCredentials(qrJson);
-      console.log('EncryptedCredentials credentials:', encryptedCredentials);
 
   const decryptedCredentials: any[] = [];
             for (const domain of encryptedCredentials.credentials) {
-              console.log('Domain credential to decrypt:', domain);
-              const decryptedCredential = await decryptFromBase64(domain.credential, await getSecret());
+              const decryptedCredential = await decryptFromBase64(domain.credential, await getCredentialSecret());
               if (decryptedCredential !== null) {
                 decryptedCredentials.push(
                   {
@@ -35,10 +33,6 @@ export const Access = async (qrJson: i.Access)=> {
                 );
               }
             };
-            // Send back to the server
-            // need targetId from somewhere
-            console.log(JSON.stringify(decryptedCredentials));
-
   const path = qrJson.type === 'domain-login'
     ? config.API_LOGIN
     : config.API_ALLOW_APPLICATION_LIST;
@@ -84,9 +78,8 @@ export const Access = async (qrJson: i.Access)=> {
   }
 };
 
-async function getEncryptedCredentials(qrJson: any){
+async function getEncryptedCredentials(qrJson: i.Access){
   
-  console.log(qrJson.type);
    const path = qrJson.type === 'domain-login'
     ? config.API_DECRYPTED_CREDENTIALS
     : config.API_DECRYPTED_APPLICATIONS_CREDENTIALS;
@@ -122,11 +115,7 @@ async function getEncryptedCredentials(qrJson: any){
       return false;
     }
 
-    const result = await response.json();
-        console.log('User applications credentials fetched:', result);
-
-    return result;
-
+    return await response.json();
   } catch (error) {
     console.error('SystemHubLogin error:', error);
     return false;
