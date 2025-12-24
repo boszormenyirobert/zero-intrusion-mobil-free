@@ -3,17 +3,17 @@
 
 const config = {
   // API Configuration
-  API_BASE: 'http://82.165.219.9:8082',
-  API_REGISTRATION: 'http://82.165.219.9:8082/api/credential-hub/shared/registration/new',
-  API_LOGIN: 'http://82.165.219.9:8082/api/credential-hub/domain/read/credential',
-  API_DECRYPTED_CREDENTIALS: 'http://82.165.219.9:8082/api/credential-hub/domain/read/credential/decrypted',
-  API_DECRYPTED_APPLICATIONS_CREDENTIALS: 'http://82.165.219.9:8082/api/credential-hub/vault/read/credential/decrypted',
-  API_ALLOW_DELETE_DOMAIN: 'http://82.165.219.9:8082/api/credential-hub/domain/delete/credential',
-  API_ALLOW_DELETE_APPLICATIONS: 'http://82.165.219.9:8082/api/credential-hub/vault/delete/credential',
-  API_ALLOW_APPLICATION_LIST: 'http://82.165.219.9:8082/api/credential-hub/vault/read/credential',
-  API_ALLOW_EDIT_APPLICATIONS: 'http://82.165.219.9:8082/api/credential-hub/vault/edit/credential',
-  API_DEVICE_REGISTRATION: 'http://82.165.219.9:8082/api/secret/new',
-  API_RECOVERY_SETTINGS: 'http://82.165.219.9:8082/api/secret/recovery-settings',
+  API_BASE: 'http://82.165.219.9:8085',
+  API_REGISTRATION: 'http://82.165.219.9:8085/api/credential-hub/shared/registration/new',
+  API_LOGIN: 'http://82.165.219.9:8085/api/credential-hub/domain/read/credential',
+  API_DECRYPTED_CREDENTIALS: 'http://82.165.219.9:8085/api/credential-hub/domain/read/credential/decrypted',
+  API_DECRYPTED_APPLICATIONS_CREDENTIALS: 'http://82.165.219.9:8085/api/credential-hub/vault/read/credential/decrypted',
+  API_ALLOW_DELETE_DOMAIN: 'http://82.165.219.9:8085/api/credential-hub/domain/delete/credential',
+  API_ALLOW_DELETE_APPLICATIONS: 'http://82.165.219.9:8085/api/credential-hub/vault/delete/credential',
+  API_ALLOW_APPLICATION_LIST: 'http://82.165.219.9:8085/api/credential-hub/vault/read/credential',
+  API_ALLOW_EDIT_APPLICATIONS: 'http://82.165.219.9:8085/api/credential-hub/vault/edit/credential',
+  API_DEVICE_REGISTRATION: 'http://82.165.219.9:8085/api/secret/new',
+  API_RECOVERY_SETTINGS: 'http://82.165.219.9:8085/api/secret/recovery-settings',
 
   // Firebase Configuration
   FIREBASE_API_KEY: 'AIzaSyAwZXKyzRlWXiMs-UsCArsnJbxS0SbsQoM',

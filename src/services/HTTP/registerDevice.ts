@@ -43,7 +43,7 @@ export const registerDeviceAndUserByClone = async (cloneData: i.Clone) => {
         await Keychain.setInternetCredentials('publicId', 'user', cloneData.publicId);
         await Keychain.setInternetCredentials('privateId', 'user', cloneData.privateId);
         await Keychain.setInternetCredentials('secret', 'user', cloneData.secret);
-        console.log("Device registered successfully via clone data");
+        await Keychain.setInternetCredentials('credentialSecret', 'user', cloneData.credentialSecret);
         return true;
     } catch (e) {
       console.error('❌ Device registration failed:');

@@ -67,8 +67,18 @@ export function ScanCode({
   }
 
   const handleQRResult = (data: string) => {
-    handleQRScan(data);
-    setView('default');  
+    const response = handleQRScan(data);
+    response.then((resp: any) => {
+      if(resp.type === 'clone' && resp.result === true){
+        setView('reset');  
+        return;
+      }else{
+        setView('default'); 
+        return; 
+      }
+     }).catch((error) => { 
+      console.error("Error handling QR scan in ScanCode:", error);
+    });
   };
 
 return (

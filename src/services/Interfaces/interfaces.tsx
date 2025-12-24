@@ -9,9 +9,11 @@ export interface Clone {
   publicId: string;
   privateId: string;
   secret: string;
+  credentialSecret: string;
   email: string;
   phone: string;
-  type: 'clone'
+  type: 'clone';
+  Type: 'clone';
 }
 
 // Base interfaces for QR data

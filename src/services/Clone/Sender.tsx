@@ -16,10 +16,12 @@ const Sender: React.FC<SenderProps> = ({ setView }) => {
       const publicId = await deviceStrore.getPublicId();
       const privateId = await deviceStrore.getPrivateId();
       const secret = await deviceStrore.getSecret();
+      const credentialSecret = await deviceStrore.getCredentialSecret();
+      
     //  const email = await deviceStrore.getEmail();
     //  const phone = await deviceStrore.getPhone();
       const type ="clone";
-      setQrValue(JSON.stringify({ publicId, privateId, secret, type }));
+      setQrValue(JSON.stringify({ publicId, privateId, secret, credentialSecret, type }));
     };    
     fetchData();
   }, []);

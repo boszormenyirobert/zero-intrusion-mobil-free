@@ -58,7 +58,9 @@ VERSION=0.11.0
    ```
    ./gradlew clean
    ./gradlew assembleDebug
-   npx react-native run-android
+
+   npx react-native start --port 8090
+   npx react-native run-android --port 8090
 
    ( adb uninstall com.zerointrusion )
 ```

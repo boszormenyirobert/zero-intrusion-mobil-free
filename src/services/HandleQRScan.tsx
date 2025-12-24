@@ -42,20 +42,26 @@ export async function handleQRScan(data:string) {
     if(!data) return; 
     const qrInput: i.QRData = JSON.parse(data);
     console.log('Parsed QR Input:', qrInput);
+
     const routeHandler = handleRoute[toCamelCase(qrInput.type)];
-    if(routeHandler === 'clone'){
-      handler.clone(qrInput as i.Clone);
-      return;
-    }
+
+    console.log("Route handler: " + routeHandler);
+
+  //  if(routeHandler === 'clone'){      
+  //    await handler.clone(qrInput as i.Clone);
+  //    return "clone";
+  //  }
 
     if (routeHandler) {
       const result = await routeHandler(qrInput);  
-      console.log('Handled QR Result:', result);
+      return {"type": qrInput.type, result};
     } else {
       console.error('Unknown QR type:', qrInput.type);
+      return false;
     }
   } catch (error) {
     console.error('Error parsing QR data:', error);
+    return false;
   }
 }
 
