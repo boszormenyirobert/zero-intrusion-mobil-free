@@ -21,6 +21,7 @@ export const Registration = async (qrJson: i.Registration) => {
     : config.API_REGISTRATION;
 
   try {
+
     const { xExtensionAuthOne, ...registrationData } = qrJson;
     const authToken = xExtensionAuthOne || '';
 

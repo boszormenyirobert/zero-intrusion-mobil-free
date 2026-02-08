@@ -1,5 +1,5 @@
 import * as i from '../Interfaces/interfaces';
-import {SystemHubRegistration, SystemHubLogin} from './SystemHub/SystemHub';
+import {SystemHubRegistration, SystemHubLogin, SystemHubSecureDevice} from './SystemHub/SystemHub';
 import {Registration as SharedRegistration} from './PasswordManager/Shared/Registration';
 import {Access} from './PasswordManager/Shared/Access';
 import {Delete as DomainDelete} from './PasswordManager/Shared/Delete';
@@ -35,4 +35,9 @@ export class RequestHandler {
   async clone(data: i.Clone): Promise<boolean> {
     return await registerDeviceAndUserByClone(data);    
   } 
+
+  // Map for secure device  (async API call)
+  async systemHubSecureDevice(data: i.SecureDevice): Promise<boolean> {
+    return await SystemHubSecureDevice(data);    
+  }     
 }

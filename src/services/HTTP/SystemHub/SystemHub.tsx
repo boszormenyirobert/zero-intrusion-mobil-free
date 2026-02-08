@@ -108,3 +108,47 @@ export const SystemHubLogin = async (qrJson: i.HubLogin): Promise<boolean> => {
     return false;
   }
 };
+
+export const SystemHubSecureDevice = async (qrJson: i.SecureDevice): Promise<boolean> => {
+  try {
+    // Extract and remove xExtensionAuthOne from qrJson
+    const { xExtensionAuthOne, oneTouchProcessId, ...inputData } = qrJson;
+    const authToken = xExtensionAuthOne || "";
+
+    // Build request body with encrypted data
+    const body: any = {
+      publicId: await getPublicId(),      
+      privateId: await encryptPrivateId(),
+      email: await getEmail(),
+      processId: oneTouchProcessId,
+      oneTouchProcessId: oneTouchProcessId,
+      ...inputData        
+    };
+
+    console.log('Secure Device Body:', body);
+
+    // Make API request
+    const response = await fetch(config.API_SECURE_DEVICE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Extension-Auth': `HMAC ${authToken}`
+      },
+      body: JSON.stringify(body),
+    });
+
+    // Check response status
+    if (!response.ok) {
+      console.error('Process failed:', response.status, response.statusText);
+      return false;
+    }
+
+    const result = await response.json();
+    console.log('Process successful:', result);
+    return true;
+
+  } catch (error) {
+    console.error('SystemHubLogin error:', error);
+    return false;
+  }
+};

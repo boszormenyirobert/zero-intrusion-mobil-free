@@ -6,6 +6,7 @@ const config = {
   API_BASE: 'http://82.165.219.9:8085',
   API_REGISTRATION: 'http://82.165.219.9:8085/api/credential-hub/shared/registration/new',
   API_LOGIN: 'http://82.165.219.9:8085/api/credential-hub/domain/read/credential',
+  API_SECURE_DEVICE: 'http://82.165.219.9:8085/api/credential-hub/one-touch/identifier',
   API_DECRYPTED_CREDENTIALS: 'http://82.165.219.9:8085/api/credential-hub/domain/read/credential/decrypted',
   API_DECRYPTED_APPLICATIONS_CREDENTIALS: 'http://82.165.219.9:8085/api/credential-hub/vault/read/credential/decrypted',
   API_ALLOW_DELETE_DOMAIN: 'http://82.165.219.9:8085/api/credential-hub/domain/delete/credential',

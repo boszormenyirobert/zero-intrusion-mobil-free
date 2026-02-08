@@ -84,6 +84,16 @@ export interface Access {
   iv: string;
 }
 
+export interface SecureDevice {  
+  oneTouchProcessId: string;
+  source: string;
+  targetId?: string;
+  type: 'secure';
+  userPublicId?: string;
+  xExtensionAuthOne: string;
+  validCommunication: [];
+}
+
 export interface AccessExtended
   extends Omit<Access, 'xExtensionAuthOne'>,
     UserProperties {

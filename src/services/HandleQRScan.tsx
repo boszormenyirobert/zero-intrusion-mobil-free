@@ -7,7 +7,8 @@ export async function handleQRScan(data:string) {
   // System Hub operations
   const systemHubRoutes = {
     systemHubRegistration: handler.systemHubRegistration,
-    systemHubLogin: handler.systemHubLogin,   
+    systemHubLogin: handler.systemHubLogin,  
+    secure: handler.systemHubSecureDevice, 
   };
 
   // Domain operations - Password Manager

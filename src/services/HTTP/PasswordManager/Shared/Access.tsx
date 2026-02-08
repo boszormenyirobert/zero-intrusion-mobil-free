@@ -51,7 +51,7 @@ export const Access = async (qrJson: i.Access)=> {
       update: false,
       credentials: decryptedCredentials    
     };
-
+    console.log('Access path:', path);
     // Make API request
     const response = await fetch(path, {
       method: 'POST',
