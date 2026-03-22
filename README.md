@@ -1,16 +1,34 @@
-### Build error
-> Failed to apply plugin 'com.facebook.react.rootproject'.
-   > A problem occurred configuring project ':app'.
-      > Failed to notify project evaluation listener.
-         > C:\wamp64\www\PlatfomFreeZeroIntrusion\ZeroIntrusion\node_modules\react-native\sdks\hermes-engine\version.properties (Das System kann die angegebene Datei nicht finden)
-
-touch node_modules/react-native/sdks/hermes-engine/version.properties
-echo hermes.version=0.0.0 > node_modules\react-native\sdks\hermes-engine\version.properties
+### New installation and build
 
 npm install --save-dev @react-native-community/cli
-npm list react-native
-npm install hermes-engine@0.81.4 --save --save => version !
 npm install hermes-engine
+## Create a file : C:\ZeroIntrusion\node_modules\react-native\sdks\hermes-engine\version.properties with the content
+# Hermes version
+VERSION=0.11.0
+
+DELETE:
+android/app/.cxx
+android/app/build
+
+Settings:
+.env and enviroments.ts 
+
+cd android && \
+./gradlew clean && \
+./gradlew assembleRelease && \
+adb install app/build/outputs/apk/release/app-release.apk
+--------------------------------------------------------
+
+Development with log
+Terminal 1 => Do not select anything:
+   npx react-native start --port 8090
+Terminal 2:
+   npx react-native run-android --port 8090
+Back to Terminal 1 to see the log
+
+
+npm list react-native
+
 
 
 npx react-native doctor
@@ -61,6 +79,11 @@ VERSION=0.11.0
 
    npx react-native start --port 8090
    npx react-native run-android --port 8090
+  
+   adb connect HOST[:5555]
+   adb pair HOST[:PORT]
+ 
+
 
    ( adb uninstall com.zerointrusion )
 ```

@@ -1,9 +1,12 @@
 // Environment configuration for React Native
 // This replaces @env imports to ensure environment variables work in release builds
+// production:https://hub.zero-intrusion.com
+// development: http://82.165.219.9:8085
 
 const config = {
   // API Configuration
   API_BASE: 'http://82.165.219.9:8085',
+  API_REGISTRATION_TO_ENCRYPT: 'http://82.165.219.9:8085/api/credential-hub/shared/registration/new/to-encrypt',
   API_REGISTRATION: 'http://82.165.219.9:8085/api/credential-hub/shared/registration/new',
   API_LOGIN: 'http://82.165.219.9:8085/api/credential-hub/domain/read/credential',
   API_SECURE_DEVICE: 'http://82.165.219.9:8085/api/credential-hub/one-touch/identifier',

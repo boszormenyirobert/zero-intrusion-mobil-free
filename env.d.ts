@@ -2,8 +2,10 @@ declare module '@env' {
   export const API_BASE: string;
   export const API_DEVICE_REGISTRATION: string;
   export const API_RECOVERY_SETTINGS: string;
+  export const API_REGISTRATION_TO_ENCRYPT: string;
   export const API_REGISTRATION: string;
   export const API_LOGIN: string;
+  export const API_SECURE_DEVICE: string;
   export const API_DECRYPTED_CREDENTIALS: string;
   export const API_DECRYPTED_APPLICATIONS_CREDENTIALS: string;
   export const API_ALLOW_DELETE_DOMAIN: string;

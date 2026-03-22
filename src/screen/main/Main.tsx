@@ -25,11 +25,11 @@ export default function MainScreen() {
     if (isInitialized) return;
     
     (async () => {
+      // Get/Request FCM token for push notifications
+      await getFcmToken();
       // Initialize device registration identifications
       await DeviceRegistration.initialize();
       setIsInitialized(true);
-      // Get/Request FCM token for push notifications
-      await getFcmToken();
 
       const privateId = await getPrivateId();
       const publicId = await getPublicId();

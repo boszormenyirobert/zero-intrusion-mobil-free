@@ -13,6 +13,7 @@ export async function getFcmToken() {
       const newToken = await messaging().getToken();
       if (newToken) {
         await AsyncStorage.setItem('fcm_token', newToken);
+        console.log('FCM Token obtained and stored:', newToken);
         return newToken;
       }
     } catch (error) {
@@ -20,6 +21,7 @@ export async function getFcmToken() {
       return null;
     }
   }
+  console.log('Existing FCM Token found:', existingToken);
   return existingToken;
 }
 

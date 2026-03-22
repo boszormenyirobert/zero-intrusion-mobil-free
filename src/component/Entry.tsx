@@ -46,7 +46,6 @@ export function ScanCode({
     }
     
     setUserAccessState(true);
-    console.log("✅ Access granted by user");
     
     // Process the QR data now that user has allowed access
     await processQRData();
@@ -55,11 +54,9 @@ export function ScanCode({
   const handleDeclineAccess = async () => {
     // Only allow if buttons are enabled
     if (!buttonsEnabled) {
-      console.log("🚫 Decline button is disabled - no action taken");
       return;
     }
     
-    console.log("❌ Access declined by user");
     setUserAccessState(false);
     
     // For decline, we can deactivate immediately since no QR processing needed
@@ -74,10 +71,11 @@ export function ScanCode({
         return;
       }else{
         setView('default'); 
+        deactivateButtons();
         return; 
       }
      }).catch((error) => { 
-      console.error("Error handling QR scan in ScanCode:", error);
+      // Error handling removed console output
     });
   };
 

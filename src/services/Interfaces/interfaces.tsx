@@ -74,6 +74,11 @@ export interface RegistrationExtended
   update: string;
   targetId?: string;
 }
+export interface RequestCredentialsToEncrypt {
+  type: string;
+  source: string;
+  registrationProcessId?: string;
+}
 
 export interface Access {
   domain: string;

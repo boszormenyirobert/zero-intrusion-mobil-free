@@ -110,7 +110,7 @@ export default function AutoQRScanner({
         </View>
       </View>
 
-      {/* Back gomb */}
+      {/* Back */}
       <View style={[entryStyles.backContainer]}>
         <Pressable
           onPress={() => setView && setView('default')}
