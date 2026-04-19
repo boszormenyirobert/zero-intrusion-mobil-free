@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Pressable } from 'react-native';
 import styles from '../Entry.style';
 import Cards from './Cards/Cards';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,7 @@ import useFirebaseMessaging from '../services/Firebase';
 import UserRegistration from './UserRegistration/UserRegistration';
 import Clone from './Clone/Clone';
 import * as i from '../services/Interfaces/interfaces';
+import { getActiveProfile, getProfiles, setActiveProfileByEmail } from '../services/DeviceStore';
 
 export function ScanCode({
   setValidUser,
@@ -17,6 +18,9 @@ export function ScanCode({
   const { t } = useTranslation();
   
   const [view, setView] = useState('default');
+  const [profiles, setProfiles] = useState<i.UserProfile[]>([]);
+  const [selectedProfileEmail, setSelectedProfileEmail] = useState('');
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   // Firebase notification and access state management
   const [messageState, setMessageState] = useState(false);
   const [userAccessState, setUserAccessState] = useState(false);
@@ -29,6 +33,25 @@ export function ScanCode({
     setUserAccessState, 
     setButtonsEnabled
   );
+
+  useEffect(() => {
+    if (view !== 'default') {
+      setShowProfileDropdown(false);
+      return;
+    }
+
+    const loadProfiles = async () => {
+      const [storedProfiles, activeProfile] = await Promise.all([
+        getProfiles(),
+        getActiveProfile(),
+      ]);
+
+      setProfiles(storedProfiles.filter(profile => Boolean(profile.email)));
+      setSelectedProfileEmail(activeProfile?.email ?? '');
+    };
+
+    loadProfiles();
+  }, [view]);
   
   const handleScanner = async () => {
     setView('scanner');
@@ -39,6 +62,16 @@ export function ScanCode({
   const handleClone = async () => {
      setView('clone'); 
   }
+  const handleProfileSelect = async (email: string) => {
+    const selectedProfile = await setActiveProfileByEmail(email);
+
+    if (!selectedProfile) {
+      return;
+    }
+
+    setSelectedProfileEmail(selectedProfile.email);
+    setShowProfileDropdown(false);
+  };
   const handleAllowAccess = async () => {
     // Only allow if buttons are enabled
     if (!buttonsEnabled) {
@@ -63,20 +96,16 @@ export function ScanCode({
     deactivateButtons();
   }
 
-  const handleQRResult = (data: string) => {
-    const response = handleQRScan(data);
-    response.then((resp: any) => {
-      if(resp.type === 'clone' && resp.result === true){
-        setView('reset');  
-        return;
-      }else{
-        setView('default'); 
-        deactivateButtons();
-        return; 
-      }
-     }).catch((error) => { 
+  const handleQRResult = async (data: string) => {
+    setView('default');
+
+    try {
+      await handleQRScan(data);
+    } catch (error) {
       // Error handling removed console output
-    });
+    } finally {
+      deactivateButtons();
+    }
   };
 
 return (
@@ -86,6 +115,41 @@ return (
       <View style={styles.container}>
       
         <Text style={[styles.text, styles.capital,styles.headLine]}>{t('corporate')}</Text>   
+
+        {profiles.length > 0 && (
+          <View style={styles.profileSelectorContainer}>
+            <Text style={styles.profileSelectorLabel}>{t('registration.profileSelector')}</Text>
+            <Pressable
+              onPress={() => setShowProfileDropdown(current => !current)}
+              style={({ pressed }) => [
+                styles.profileSelectorButton,
+                pressed && styles.profileSelectorButtonPressed,
+              ]}
+            >
+              <Text style={styles.profileSelectorValue}>
+                {selectedProfileEmail || t('registration.profileSelectorPlaceholder')}
+              </Text>
+            </Pressable>
+
+            {showProfileDropdown && (
+              <View style={styles.profileDropdown}>
+                {profiles.map(profile => (
+                  <Pressable
+                    key={profile.email}
+                    onPress={() => handleProfileSelect(profile.email)}
+                    style={({ pressed }) => [
+                      styles.profileDropdownItem,
+                      profile.email === selectedProfileEmail && styles.profileDropdownItemActive,
+                      pressed && styles.profileDropdownItemPressed,
+                    ]}
+                  >
+                    <Text style={styles.profileDropdownText}>{profile.email}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
 
         <Cards 
           type="scanCode"

@@ -1,6 +1,6 @@
 import * as i from '../../../Interfaces/interfaces';
-import config from '../../../../config/environment';
 import {
+  getApiUrl,
   getPublicId,
   getPrivateId,
   getSecret,
@@ -8,6 +8,7 @@ import {
   getCredentialSecret,
 } from '../../../DeviceStore';
 import { encryptToBase64, decryptFromBase64 } from '../../../Encrypter';
+import { logHttpRequest, logHttpResponse } from '../../httpLogger';
 
 // Helper function to encrypt private ID
 const encryptPrivateId = async (): Promise<string> => {
@@ -34,8 +35,8 @@ export const Access = async (qrJson: i.Access)=> {
               }
             };
   const path = qrJson.type === 'domain-login'
-    ? config.API_LOGIN
-    : config.API_ALLOW_APPLICATION_LIST;
+    ? await getApiUrl('API_LOGIN')
+    : await getApiUrl('API_ALLOW_APPLICATION_LIST');
 
   try {
     // Extract and remove xExtensionAuthOne from qrJson
@@ -53,14 +54,18 @@ export const Access = async (qrJson: i.Access)=> {
     };
     console.log('Access path:', path);
     // Make API request
-    const response = await fetch(path, {
+    const requestOptions: RequestInit = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Extension-Auth': `HMAC ${authToken}`
       },
       body: JSON.stringify(body),
-    });
+    };
+
+    logHttpRequest('PasswordManagerAccess.submitCredentials', path, requestOptions);
+    const response = await fetch(path, requestOptions);
+    await logHttpResponse('PasswordManagerAccess.submitCredentials', response);
 
     // Check response status
     if (!response.ok) {
@@ -81,8 +86,8 @@ export const Access = async (qrJson: i.Access)=> {
 async function getEncryptedCredentials(qrJson: i.Access){
   
    const path = qrJson.type === 'domain-login'
-    ? config.API_DECRYPTED_CREDENTIALS
-    : config.API_DECRYPTED_APPLICATIONS_CREDENTIALS;
+  ? await getApiUrl('API_DECRYPTED_CREDENTIALS')
+  : await getApiUrl('API_DECRYPTED_APPLICATIONS_CREDENTIALS');
    
   try {
     // Extract and remove xExtensionAuthOne from qrJson
@@ -100,14 +105,18 @@ async function getEncryptedCredentials(qrJson: i.Access){
     };
 
     // Make API request
-    const response = await fetch(path, {
+    const requestOptions: RequestInit = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Extension-Auth': `HMAC ${authToken}`
       },
       body: JSON.stringify(body),
-    });
+    };
+
+    logHttpRequest('PasswordManagerAccess.getEncryptedCredentials', path, requestOptions);
+    const response = await fetch(path, requestOptions);
+    await logHttpResponse('PasswordManagerAccess.getEncryptedCredentials', response);
 
     // Check response status
     if (!response.ok) {

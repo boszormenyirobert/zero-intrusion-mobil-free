@@ -1,15 +1,18 @@
 import 'react-native-get-random-values';
-import { getCredentialSecret, getPrivateId, getPublicId, getSecret } from './DeviceStore';
+import { getActiveProfile, getCredentialSecret, getPrivateId, getPublicId, getSecret } from './DeviceStore';
 import nacl from 'tweetnacl';
 import { encodeBase64, decodeUTF8, decodeBase64, encodeUTF8} from 'tweetnacl-util';
 import blake2b from 'blake2b';
 import * as i from './Interfaces/interfaces';
 
-export default async function getEncryptedIdentification(): Promise<typeof i.Device> {
-  const privateId = await getPrivateId();          
-  const secret = await getSecret();
-  const credentialSecret = await getCredentialSecret();
-  const publicId = await getPublicId();
+export default async function getEncryptedIdentification(
+  profile?: i.UserProfile | null,
+): Promise<typeof i.Device> {
+  const activeProfile = profile ?? (await getActiveProfile());
+  const privateId = activeProfile?.privateId ?? (await getPrivateId());
+  const secret = activeProfile?.secret ?? (await getSecret());
+  const credentialSecret = activeProfile?.credentialSecret ?? (await getCredentialSecret());
+  const publicId = activeProfile?.publicId ?? (await getPublicId());
 
   const encryptedUserPrivateId = await encryptToBase64(privateId, secret);
 
@@ -24,9 +27,12 @@ export default async function getEncryptedIdentification(): Promise<typeof i.Dev
   };
 }
 
-async function encryptToBase64(message: string, secret: string): Promise<string> {
+async function encryptToBase64(
+  message: string | null | undefined,
+  secret: string | null | undefined,
+): Promise<string> {
   // 1. Convert string to Uint8Array for React Native compatibility
-  const secretBytes = decodeUTF8(secret);
+  const secretBytes = decodeUTF8(secret ?? '');
   
   // 2. 32 byte key hash using Blake2b (exact libsodium compatibility)
   const keyArray = blake2b(32).update(secretBytes).digest();
@@ -35,7 +41,7 @@ async function encryptToBase64(message: string, secret: string): Promise<string>
   const nonce = nacl.randomBytes(24);
 
   // 4. Encrypt using NaCl secretbox (XSalsa20 + Poly1305)
-  const messageBytes = decodeUTF8(message);
+  const messageBytes = decodeUTF8(message ?? '');
   const cipher = nacl.secretbox(messageBytes, nonce, keyArray);
 
   // 5. Combine nonce + cipher

@@ -12,9 +12,27 @@ export interface Clone {
   credentialSecret: string;
   email: string;
   phone: string;
+  privacyPolicy?: boolean;
+  url?: string;
   type: 'clone';
   Type: 'clone';
 }
+
+export interface UserProfile {
+  email: string;
+  phone: string;
+  privacyPolicy: boolean;
+  publicId: string;
+  privateId: string;
+  secret: string;
+  credentialSecret: string;
+  url: string;
+}
+
+export type DeviceRegistrationSecrets = Pick<
+  UserProfile,
+  'publicId' | 'privateId' | 'secret' | 'credentialSecret'
+>;
 
 // Base interfaces for QR data
 export interface HubRegistration {

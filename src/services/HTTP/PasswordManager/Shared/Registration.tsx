@@ -1,6 +1,6 @@
 import * as i from '../../../Interfaces/interfaces';
-import config from '../../../../config/environment';
 import {
+  getApiUrl,
   getPublicId,
   getPrivateId,
   getSecret,
@@ -8,13 +8,14 @@ import {
   getCredentialSecret,
 } from '../../../DeviceStore';
 import { encryptToBase64 } from '../../../Encrypter';
+import { logHttpRequest, logHttpResponse } from '../../httpLogger';
 
 // Domain or Application registration or Update-application
 export const Registration = async (qrJson: i.Registration) => {
   const path =
     qrJson.type === 'update-applications'
-      ? config.API_ALLOW_EDIT_APPLICATIONS
-      : config.API_REGISTRATION;
+      ? await getApiUrl('API_ALLOW_EDIT_APPLICATIONS')
+      : await getApiUrl('API_REGISTRATION');
 
   try {
       const rawCredentials = await getRawCredentialsRequest(qrJson);
@@ -28,15 +29,20 @@ export const Registration = async (qrJson: i.Registration) => {
 
 const getRawCredentialsRequest = async (qrJson: i.Registration) => {
   const authToken = getAuthToken(qrJson);
+  const path = await getApiUrl('API_REGISTRATION_TO_ENCRYPT');
 
-  const response = await fetch(config.API_REGISTRATION_TO_ENCRYPT, {
+  const requestOptions: RequestInit = {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Extension-Auth': `HMAC ${authToken}`,
     },
     body: JSON.stringify(buildGetRawCredentialsPayload(qrJson)),
-  });
+  };
+
+  logHttpRequest('PasswordManagerRegistration.getRawCredentials', path, requestOptions);
+  const response = await fetch(path, requestOptions);
+  await logHttpResponse('PasswordManagerRegistration.getRawCredentials', response);
 
   if (!response.ok) {
     console.error(
@@ -73,14 +79,18 @@ const registrateEncryptedCredentialsRequest = async (qrJson: i.Registration, pat
   await buildEncryptedCredentialsPayload(qrJson, rawCredentials);
 
   // Make API request to save the encrypted credentials
-  const response_final = await fetch(path, {
+  const requestOptions: RequestInit = {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Extension-Auth': `HMAC ${authToken}`,
     },
     body: JSON.stringify(body_to_encrypt),
-  });
+  };
+
+  logHttpRequest('PasswordManagerRegistration.saveCredentials', path, requestOptions);
+  const response_final = await fetch(path, requestOptions);
+  await logHttpResponse('PasswordManagerRegistration.saveCredentials', response_final);
   console.log('Registration request sent:', path, body_to_encrypt);
   // Check response status
   if (!response_final.ok) {

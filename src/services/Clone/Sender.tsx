@@ -13,15 +13,14 @@ const Sender: React.FC<SenderProps> = ({ setView }) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const publicId = await deviceStrore.getPublicId();
-      const privateId = await deviceStrore.getPrivateId();
-      const secret = await deviceStrore.getSecret();
-      const credentialSecret = await deviceStrore.getCredentialSecret();
-      
-    //  const email = await deviceStrore.getEmail();
-    //  const phone = await deviceStrore.getPhone();
+      const activeProfile = await deviceStrore.getActiveProfile();
+
+      if (!activeProfile) {
+        return;
+      }
+
       const type ="clone";
-      setQrValue(JSON.stringify({ publicId, privateId, secret, credentialSecret, type }));
+      setQrValue(JSON.stringify({ ...activeProfile, type }));
     };    
     fetchData();
   }, []);

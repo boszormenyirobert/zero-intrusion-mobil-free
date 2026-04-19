@@ -1,12 +1,13 @@
 import * as i from '../../../Interfaces/interfaces';
-import config from '../../../../config/environment';
 import {
+  getApiUrl,
   getPublicId,
   getPrivateId,
   getSecret,
   getEmail,
 } from '../../../DeviceStore';
 import { encryptToBase64 } from '../../../Encrypter';
+import { logHttpRequest, logHttpResponse } from '../../httpLogger';
 
 // Helper function to encrypt private ID
 const encryptPrivateId = async (): Promise<string> => {
@@ -16,8 +17,8 @@ const encryptPrivateId = async (): Promise<string> => {
 // Function to handle domain login ~ access stored credentials for an domain
 export const Delete = async (qrJson: i.Delete)=> {
   const path = qrJson.type === 'delete-applications'
-    ? config.API_ALLOW_DELETE_APPLICATIONS
-    : config.API_ALLOW_DELETE_DOMAIN;
+    ? await getApiUrl('API_ALLOW_DELETE_APPLICATIONS')
+    : await getApiUrl('API_ALLOW_DELETE_DOMAIN');
 
   try {
     // Extract and remove xExtensionAuthOne from qrJson
@@ -33,14 +34,18 @@ export const Delete = async (qrJson: i.Delete)=> {
     };
 
     // Make API request
-    const response = await fetch(path, {
+    const requestOptions: RequestInit = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Extension-Auth': `HMAC ${authToken}`
       },
       body: JSON.stringify(body),
-    });
+    };
+
+    logHttpRequest('PasswordManagerDelete', path, requestOptions);
+    const response = await fetch(path, requestOptions);
+    await logHttpResponse('PasswordManagerDelete', response);
 
     // Check response status
     if (!response.ok) {

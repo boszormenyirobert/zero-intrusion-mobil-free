@@ -142,5 +142,51 @@ export default StyleSheet.create({
     fontSize: 16, 
     textAlign: 'center',
     marginTop: 50
+  },
+  profileSelectorContainer: {
+    marginBottom: 16,
+    zIndex: 10,
+  },
+  profileSelectorLabel: {
+    color: COLORS.white,
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  profileSelectorButton: {
+    borderWidth: 1,
+    borderColor: COLORS.white,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: COLORS.light_dark,
+  },
+  profileSelectorButtonPressed: {
+    opacity: 0.9,
+  },
+  profileSelectorValue: {
+    color: COLORS.white,
+    fontSize: 15,
+  },
+  profileDropdown: {
+    marginTop: 8,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.white,
+    backgroundColor: COLORS.light_dark,
+  },
+  profileDropdownItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  profileDropdownItemActive: {
+    backgroundColor: COLORS.blue,
+  },
+  profileDropdownItemPressed: {
+    opacity: 0.85,
+  },
+  profileDropdownText: {
+    color: COLORS.white,
+    fontSize: 15,
   }
 });

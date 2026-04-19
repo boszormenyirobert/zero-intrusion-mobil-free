@@ -8,7 +8,7 @@ import {
 import entryStyles from '../../Entry.style';
 
 type AutoQRScannerProps = {
-  onResult: (data: string) => void;
+  onResult: (data: string) => Promise<void>;
   setView?: any;
 };
 
@@ -20,6 +20,8 @@ export default function AutoQRScanner({
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const device = useCameraDevice('back');
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const scanLockRef = useRef(false);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
     const requestPermission = async () => {
@@ -34,6 +36,10 @@ export default function AutoQRScanner({
       }
     };
     requestPermission();
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
     useEffect(() => {
@@ -51,17 +57,35 @@ export default function AutoQRScanner({
         }),
       ])
     ).start();
-  });
+  }, [scaleAnim]);
+
+  const processScannedCode = async (value: string) => {
+    scanLockRef.current = true;
+    if (isMountedRef.current) {
+      setScanned(true);
+    }
+
+    try {
+      await onResult(value);
+    } finally {
+      scanLockRef.current = false;
+      if (isMountedRef.current) {
+        setScanned(false);
+      }
+    }
+  };
 
   const codeScanner = useCodeScanner({
     codeTypes: ['qr'],
     onCodeScanned: codes => {
-      console.log('Scanned codes:', codes);
-      if (!scanned && codes.length > 0) {
-        setScanned(true);
-        onResult(codes[0].value || '');
-        setTimeout(() => setScanned(false), 2000);
+      if (scanLockRef.current || codes.length === 0) {
+        return;
       }
+
+      console.log('Scanned codes:', codes);
+      processScannedCode(codes[0].value || '').catch(error => {
+        console.error('QR processing failed:', error);
+      });
     },
   });
 
@@ -90,11 +114,11 @@ export default function AutoQRScanner({
   }
 
  return (
-    <View style={{ flex: 1 }}>
+   <View style={styles.scannerContainer}>
       <Camera
         style={StyleSheet.absoluteFill}
         device={device}
-        isActive={true}
+        isActive={!scanned}
         codeScanner={codeScanner}
       />
 
@@ -129,6 +153,7 @@ export default function AutoQRScanner({
 }
 
 const styles = StyleSheet.create({
+  scannerContainer: { flex: 1 },
   container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   overlay: {
     position: 'absolute',

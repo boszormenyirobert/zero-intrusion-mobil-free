@@ -8,6 +8,7 @@ import DeviceRegistration from '../../services/DeviceRegistration';
 import Entry from './../../component/Entry';
 import UserRegistration from '../../component/UserRegistration/UserRegistration';
 import {
+  getPrivacyPolicy,
   getPrivateId,
   getPublicId,
   getSecret,
@@ -38,6 +39,7 @@ export default function MainScreen() {
       const fcmToken = await getFcmToken();
       const email = await getEmail();
       const phone = await getPhone();
+      const privacyPolicy = await getPrivacyPolicy();
 
       console.log('privateId from storage !!! :', privateId);
       console.log('publicId from storage !!! :', publicId);
@@ -46,9 +48,10 @@ export default function MainScreen() {
       console.log('fcmToken from storage !!! :', fcmToken);
       console.log('email from storage !!! :', email);
       console.log('phone from storage !!! :', phone);
+      console.log('privacyPolicy from storage !!! :', privacyPolicy);
 
       // Check private id,public id, secret, email, phone and policy acceptance, before allowing user to access main app
-      if (!privateId || !publicId || !secret || !email || !phone) {
+      if (!privateId || !publicId || !secret || !credentialSecret || !email || !phone || !privacyPolicy) {
         setValidUser(false);
       }
     })();

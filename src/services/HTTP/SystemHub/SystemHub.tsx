@@ -1,7 +1,7 @@
 import * as i from '../../../services/Interfaces/interfaces';
-import config from '../../../config/environment';
-import { getPublicId, getPrivateId, getSecret, getEmail } from '../../../services/DeviceStore';
+import { getApiUrl, getPublicId, getPrivateId, getSecret, getEmail } from '../../../services/DeviceStore';
 import { encryptToBase64 } from '../../Encrypter';
+import { logHttpRequest, logHttpResponse } from '../httpLogger';
 
 // Helper function to generate random secret
 const generatedSecret = (): string => {
@@ -20,6 +20,7 @@ const encryptPrivateId = async (): Promise<string> => {
 
 export const SystemHubRegistration = async (qrJson: i.HubRegistration): Promise<boolean> => {
   try {
+    const path = await getApiUrl('API_REGISTRATION');
     // Extract auth token from QR data
     const { xExtensionAuthOne, ...registrationData } = qrJson;
     const authToken = xExtensionAuthOne || "";
@@ -42,14 +43,18 @@ export const SystemHubRegistration = async (qrJson: i.HubRegistration): Promise<
     };
 
     // Make API request
-    const response = await fetch(config.API_REGISTRATION, {
+    const requestOptions: RequestInit = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Extension-Auth': `HMAC ${authToken}`
       },
       body: JSON.stringify(body),
-    });
+    };
+
+    logHttpRequest('SystemHubRegistration', path, requestOptions);
+    const response = await fetch(path, requestOptions);
+    await logHttpResponse('SystemHubRegistration', response);
 
     // Check response status
     if (!response.ok) {
@@ -69,6 +74,7 @@ export const SystemHubRegistration = async (qrJson: i.HubRegistration): Promise<
 
 export const SystemHubLogin = async (qrJson: i.HubLogin): Promise<boolean> => {
   try {
+    const path = await getApiUrl('API_LOGIN');
     // Extract and remove xExtensionAuthOne from qrJson
     const { xExtensionAuthOne, ...loginData } = qrJson;
     const authToken = xExtensionAuthOne || "";
@@ -84,14 +90,18 @@ export const SystemHubLogin = async (qrJson: i.HubLogin): Promise<boolean> => {
     console.log('Login Body:', body);
 
     // Make API request
-    const response = await fetch(config.API_LOGIN, {
+    const requestOptions: RequestInit = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Extension-Auth': `HMAC ${authToken}`
       },
       body: JSON.stringify(body),
-    });
+    };
+
+    logHttpRequest('SystemHubLogin', path, requestOptions);
+    const response = await fetch(path, requestOptions);
+    await logHttpResponse('SystemHubLogin', response);
 
     // Check response status
     if (!response.ok) {
@@ -111,6 +121,7 @@ export const SystemHubLogin = async (qrJson: i.HubLogin): Promise<boolean> => {
 
 export const SystemHubSecureDevice = async (qrJson: i.SecureDevice): Promise<boolean> => {
   try {
+    const path = await getApiUrl('API_SECURE_DEVICE');
     // Extract and remove xExtensionAuthOne from qrJson
     const { xExtensionAuthOne, oneTouchProcessId, ...inputData } = qrJson;
     const authToken = xExtensionAuthOne || "";
@@ -128,14 +139,18 @@ export const SystemHubSecureDevice = async (qrJson: i.SecureDevice): Promise<boo
     console.log('Secure Device Body:', body);
 
     // Make API request
-    const response = await fetch(config.API_SECURE_DEVICE, {
+    const requestOptions: RequestInit = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Extension-Auth': `HMAC ${authToken}`
       },
       body: JSON.stringify(body),
-    });
+    };
+
+    logHttpRequest('SystemHubSecureDevice', path, requestOptions);
+    const response = await fetch(path, requestOptions);
+    await logHttpResponse('SystemHubSecureDevice', response);
 
     // Check response status
     if (!response.ok) {

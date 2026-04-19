@@ -3,21 +3,40 @@
 // production:https://hub.zero-intrusion.com
 // development: http://82.165.219.9:8085
 
+const DEFAULT_API_BASE = 'http://82.165.219.9:8085';
+
+export const normalizeApiBaseUrl = (url: string) => url.trim().replace(/\/+$/, '');
+
+export const API_PATHS = {
+  API_REGISTRATION_TO_ENCRYPT: '/api/credential-hub/shared/registration/new/to-encrypt',
+  API_REGISTRATION: '/api/credential-hub/shared/registration/new',
+  API_LOGIN: '/api/credential-hub/domain/read/credential',
+  API_SECURE_DEVICE: '/api/credential-hub/one-touch/identifier',
+  API_DECRYPTED_CREDENTIALS: '/api/credential-hub/domain/read/credential/decrypted',
+  API_DECRYPTED_APPLICATIONS_CREDENTIALS: '/api/credential-hub/vault/read/credential/decrypted',
+  API_ALLOW_DELETE_DOMAIN: '/api/credential-hub/domain/delete/credential',
+  API_ALLOW_DELETE_APPLICATIONS: '/api/credential-hub/vault/delete/credential',
+  API_ALLOW_APPLICATION_LIST: '/api/credential-hub/vault/read/credential',
+  API_ALLOW_EDIT_APPLICATIONS: '/api/credential-hub/vault/edit/credential',
+  API_DEVICE_REGISTRATION: '/api/secret/new',
+  API_RECOVERY_SETTINGS: '/api/secret/recovery-settings',
+} as const;
+
+export type ApiConfigKey = keyof typeof API_PATHS;
+
+export const buildApiConfig = (apiBase: string) => {
+  const normalizedBase = normalizeApiBaseUrl(apiBase);
+
+  return Object.entries(API_PATHS).reduce((result, [key, path]) => {
+    result[key as ApiConfigKey] = `${normalizedBase}${path}`;
+    return result;
+  }, {} as Record<ApiConfigKey, string>);
+};
+
 const config = {
   // API Configuration
-  API_BASE: 'http://82.165.219.9:8085',
-  API_REGISTRATION_TO_ENCRYPT: 'http://82.165.219.9:8085/api/credential-hub/shared/registration/new/to-encrypt',
-  API_REGISTRATION: 'http://82.165.219.9:8085/api/credential-hub/shared/registration/new',
-  API_LOGIN: 'http://82.165.219.9:8085/api/credential-hub/domain/read/credential',
-  API_SECURE_DEVICE: 'http://82.165.219.9:8085/api/credential-hub/one-touch/identifier',
-  API_DECRYPTED_CREDENTIALS: 'http://82.165.219.9:8085/api/credential-hub/domain/read/credential/decrypted',
-  API_DECRYPTED_APPLICATIONS_CREDENTIALS: 'http://82.165.219.9:8085/api/credential-hub/vault/read/credential/decrypted',
-  API_ALLOW_DELETE_DOMAIN: 'http://82.165.219.9:8085/api/credential-hub/domain/delete/credential',
-  API_ALLOW_DELETE_APPLICATIONS: 'http://82.165.219.9:8085/api/credential-hub/vault/delete/credential',
-  API_ALLOW_APPLICATION_LIST: 'http://82.165.219.9:8085/api/credential-hub/vault/read/credential',
-  API_ALLOW_EDIT_APPLICATIONS: 'http://82.165.219.9:8085/api/credential-hub/vault/edit/credential',
-  API_DEVICE_REGISTRATION: 'http://82.165.219.9:8085/api/secret/new',
-  API_RECOVERY_SETTINGS: 'http://82.165.219.9:8085/api/secret/recovery-settings',
+  API_BASE: DEFAULT_API_BASE,
+  ...buildApiConfig(DEFAULT_API_BASE),
 
   // Firebase Configuration
   FIREBASE_API_KEY: 'AIzaSyAwZXKyzRlWXiMs-UsCArsnJbxS0SbsQoM',

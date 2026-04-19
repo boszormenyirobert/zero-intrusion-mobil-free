@@ -22,6 +22,7 @@ export default StyleSheet.create({
   switchContainer: {
     flexDirection: 'row',
     marginVertical: 10,
+    alignItems: 'center',
   },
   headLine: {
     fontSize: 24,
@@ -38,5 +39,17 @@ export default StyleSheet.create({
   accept: {
     marginLeft: 8,
     color: COLORS.white,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  secondaryButton: {
+    backgroundColor: COLORS.light_dark,
+  },
+  profileUrlLabel: {
+    color: COLORS.white,
+    marginBottom: 16,
   },
 });
