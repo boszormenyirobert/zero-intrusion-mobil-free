@@ -12,7 +12,7 @@ export const requestDeviceRegistration = async (
       const normalizedBaseUrl = normalizeApiBaseUrl(apiBaseUrl);
       const apiConfig = buildApiConfig(normalizedBaseUrl);
 
-      console.log('🌐 Attempting to connect to:', apiConfig.API_DEVICE_REGISTRATION);
+      console.log('Attempting to connect to:', apiConfig.API_DEVICE_REGISTRATION);
       
       const requestOptions: RequestInit = {
         method: 'GET',
@@ -23,8 +23,8 @@ export const requestDeviceRegistration = async (
       const response = await fetch(apiConfig.API_DEVICE_REGISTRATION, requestOptions);
       await logHttpResponse('requestDeviceRegistration', response);
 
-      console.log('🌐 Response status:', response.status);
-      console.log('🌐 Response ok:', response.ok);
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
 
       const data = await response.json();
       const dataObject = JSON.parse(data.content);
@@ -41,9 +41,9 @@ export const requestDeviceRegistration = async (
 
       return null;
     } catch (e) {
-      console.error('❌ Device registration failed:');
-      console.error('❌ Error details:', e);
-      console.error('❌ API URL was:', apiBaseUrl);
+      console.error(' Device registration failed:');
+      console.error(' Error details:', e);
+      console.error(' API URL was:', apiBaseUrl);
       return null;
     }
 };
@@ -88,9 +88,9 @@ export const registerDeviceAndUserByClone = async (cloneData: i.Clone) => {
 
         return true;
     } catch (e) {
-      console.error('❌ Device registration failed:');
-      console.error('❌ Error details:', e);
-      console.error('❌ API URL was:', cloneData.url ?? config.API_BASE);
+      console.error(' Device registration failed:');
+      console.error(' Error details:', e);
+      console.error(' API URL was:', cloneData.url ?? config.API_BASE);
       return false;
     }
 };
