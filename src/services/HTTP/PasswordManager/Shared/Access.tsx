@@ -20,6 +20,10 @@ export const Access = async (qrJson: i.Access)=> {
   // Request the users-encrypted credentials list
   const encryptedCredentials = await getEncryptedCredentials(qrJson);
 
+  if (!encryptedCredentials || !Array.isArray(encryptedCredentials.credentials)) {
+    return false;
+  }
+
   const decryptedCredentials: any[] = [];
             for (const domain of encryptedCredentials.credentials) {
               const decryptedCredential = await decryptFromBase64(domain.credential, await getCredentialSecret());

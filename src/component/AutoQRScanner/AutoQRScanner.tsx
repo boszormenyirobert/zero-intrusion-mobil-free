@@ -12,6 +12,16 @@ type AutoQRScannerProps = {
   setView?: any;
 };
 
+export const setScannedIfMounted = (
+  isMountedRef: { current: boolean },
+  setScanned: (value: boolean) => void,
+  value: boolean,
+) => {
+  if (isMountedRef.current) {
+    setScanned(value);
+  }
+};
+
 export default function AutoQRScanner({
   onResult,
   setView,
@@ -43,7 +53,7 @@ export default function AutoQRScanner({
   }, []);
 
     useEffect(() => {
-    Animated.loop(
+    const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(scaleAnim, {
           toValue: 1.05,
@@ -56,22 +66,24 @@ export default function AutoQRScanner({
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+
+    animation.start();
+
+    return () => {
+      animation.stop();
+    };
   }, [scaleAnim]);
 
   const processScannedCode = async (value: string) => {
     scanLockRef.current = true;
-    if (isMountedRef.current) {
-      setScanned(true);
-    }
+    setScannedIfMounted(isMountedRef, setScanned, true);
 
     try {
       await onResult(value);
     } finally {
       scanLockRef.current = false;
-      if (isMountedRef.current) {
-        setScanned(false);
-      }
+      setScannedIfMounted(isMountedRef, setScanned, false);
     }
   };
 

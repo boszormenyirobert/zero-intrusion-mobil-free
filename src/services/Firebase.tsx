@@ -33,10 +33,15 @@ export default function useFirebaseMessaging(
 ) {  
   // Store pending QR data
   const [pendingQRData, setPendingQRData] = React.useState<string | null>(null);
+  const deactivateTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Create stable deactivateButtons function with useCallback
   const deactivateButtons = React.useCallback(() => {
     console.log("Deactivating buttons until next notification");
+    if (deactivateTimeoutRef.current) {
+      clearTimeout(deactivateTimeoutRef.current);
+      deactivateTimeoutRef.current = null;
+    }
     setMessageState(false);
     setPendingQRData(null);
     if (setAccessState) {
@@ -67,14 +72,14 @@ export default function useFirebaseMessaging(
     const unsubscribeMessage = messaging().onMessage(async remoteMessage => {
       const {action, qrData} = remoteMessage.data;
 
-          let parsedQR: any;
+          let parsedQR: any = null;
           if (typeof qrData === 'string') {
             parsedQR = JSON.parse(qrData);
-          } else {
+          } else if (qrData && typeof qrData === 'object') {
             parsedQR = qrData;
           }
          
-          if (parsedQR.type === 'user-credential-decryption') {
+          if (parsedQR?.type === 'user-credential-decryption') {
             let credentials = parsedQR.credentials;
             const decryptedCredentials: string[] = [];
             for (const credential of credentials) {
@@ -83,9 +88,7 @@ export default function useFirebaseMessaging(
                 decryptedCredentials.push(encryptedValue);
               }
             };           
-            return () => {              
-              unsubscribeMessage();     
-            };
+            return;
           }
 
       if (action === 'show_allow_close') {
@@ -99,13 +102,17 @@ export default function useFirebaseMessaging(
         setPendingQRData(qrData?.toString() || null);
         
         // Set timer to deactivate after 10 seconds
-        setTimeout(() => {
+        deactivateTimeoutRef.current = setTimeout(() => {
           deactivateButtons();
         }, 10000);
       }
     });
 
     return () => {
+      if (deactivateTimeoutRef.current) {
+        clearTimeout(deactivateTimeoutRef.current);
+        deactivateTimeoutRef.current = null;
+      }
       unsubscribeMessage();     
     };
   }, [setMessageState, setAccessState, setButtonsEnabled, deactivateButtons]);

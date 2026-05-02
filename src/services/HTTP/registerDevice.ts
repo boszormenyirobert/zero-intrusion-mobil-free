@@ -3,6 +3,59 @@ import config, { buildApiConfig, normalizeApiBaseUrl } from '../../config/enviro
 import { saveProfile, setActiveProfile } from '../DeviceStore';
 import { logHttpRequest, logHttpResponse } from './httpLogger';
 
+const parseJsonSafely = (value: string) => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+};
+
+const extractDeviceSecrets = (responseBody: unknown): i.DeviceRegistrationSecrets | null => {
+  if (!responseBody || typeof responseBody !== 'object') {
+    return null;
+  }
+
+  const directPrivateSecret = 'privateSecret' in responseBody
+    ? (responseBody as { privateSecret?: unknown }).privateSecret
+    : null;
+
+  const nestedContent = 'content' in responseBody
+    ? (responseBody as { content?: unknown }).content
+    : null;
+
+  const nestedPayload = typeof nestedContent === 'string'
+    ? parseJsonSafely(nestedContent)
+    : nestedContent;
+
+  const privateSecretSource = directPrivateSecret
+    ?? (nestedPayload && typeof nestedPayload === 'object' && 'privateSecret' in nestedPayload
+      ? (nestedPayload as { privateSecret?: unknown }).privateSecret
+      : null);
+
+  if (!privateSecretSource || typeof privateSecretSource !== 'object') {
+    return null;
+  }
+
+  const {
+    publicId,
+    privateId,
+    secret,
+    credentialSecret,
+  } = privateSecretSource as Partial<i.DeviceRegistrationSecrets>;
+
+  if (!publicId || !privateId || !secret || !credentialSecret) {
+    return null;
+  }
+
+  return {
+    publicId,
+    privateId,
+    secret,
+    credentialSecret,
+  };
+};
+
 // Exception HMAC the registerDevice
 // Registers the device by fetching credentials from the API
 export const requestDeviceRegistration = async (
@@ -27,17 +80,13 @@ export const requestDeviceRegistration = async (
       console.log('Response ok:', response.ok);
 
       const data = await response.json();
-      const dataObject = JSON.parse(data.content);
-      const { publicId, privateId, secret, credentialSecret } = dataObject.privateSecret;
+      const deviceSecrets = extractDeviceSecrets(data);
 
-      if (publicId && privateId && secret) {
-        return {
-          publicId,
-          privateId,
-          secret,
-          credentialSecret,
-        };
+      if (deviceSecrets) {
+        return deviceSecrets;
       }
+
+      console.error(' Device registration response format was unexpected:', data);
 
       return null;
     } catch (e) {
