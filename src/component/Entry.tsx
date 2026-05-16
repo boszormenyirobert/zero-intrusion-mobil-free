@@ -58,7 +58,10 @@ export function ScanCode({
   }
   const handleResetDevelopment = async () => {
     setView('reset');
-  }  
+  }
+  const handleResetBack = () => {
+    setView('default');
+  }
   const handleClone = async () => {
      setView('clone'); 
   }
@@ -77,11 +80,22 @@ export function ScanCode({
     if (!buttonsEnabled) {
       return;
     }
+
+    const confirmedAt = Date.now();
+    console.log('User confirmed request. Starting processing timer.');
     
     setUserAccessState(true);
     
     // Process the QR data now that user has allowed access
-    await processQRData();
+    try {
+      await processQRData();
+      const elapsedMs = Date.now() - confirmedAt;
+      console.log(`Confirmed request processed in ${elapsedMs} ms.`);
+    } catch (error) {
+      const elapsedMs = Date.now() - confirmedAt;
+      console.error(`Confirmed request failed after ${elapsedMs} ms:`, error);
+      throw error;
+    }
   }
   
   const handleDeclineAccess = async () => {
@@ -220,10 +234,22 @@ return (
 
    {/* Update recovery user settings - email & phone */}
    {view === 'reset' &&(
-      <UserRegistration 
-      setValidUser={setValidUser} 
-      setView={setView}
-      />
+      <View style={styles.resetContainer}>
+        <Pressable
+          testID="reset-back-button"
+          onPress={handleResetBack}
+          style={({ pressed }) => [
+            styles.resetBackButton,
+            pressed && styles.profileSelectorButtonPressed,
+          ]}
+        >
+          <Text style={styles.resetBackButtonText}>{t('registration.back')}</Text>
+        </Pressable>
+        <UserRegistration
+          setValidUser={setValidUser}
+          setView={setView}
+        />
+      </View>
    )}
 
    {/* Clone view */}

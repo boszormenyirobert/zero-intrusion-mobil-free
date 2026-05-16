@@ -4,6 +4,12 @@ import React, {useEffect} from 'react';
 import { handleQRScan } from './HandleQRScan';
 import { decryptFromBase64 } from './Encrypter';
 import { getCredentialSecret } from './DeviceStore';
+import {
+  clearAccessConfirmation,
+  clearPreparedAccess,
+  markAccessConfirmed,
+  prepareAccess,
+} from './HTTP/PasswordManager/Shared/Access';
 
 // Function to get or request FCM token
 export async function getFcmToken() {
@@ -26,6 +32,8 @@ export async function getFcmToken() {
 }
 
 // Enhanced Firebase messaging hook with manual QR processing
+const SHOW_BUTTONS_DELAY_MS = 300;
+
 export default function useFirebaseMessaging(
   setMessageState: (state: boolean) => void, 
   setAccessState?: (state: boolean) => void,
@@ -34,13 +42,29 @@ export default function useFirebaseMessaging(
   // Store pending QR data
   const [pendingQRData, setPendingQRData] = React.useState<string | null>(null);
   const deactivateTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showButtonsTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingAccessCacheKeyRef = React.useRef<string | null>(null);
+
+  const clearShowButtonsTimeout = React.useCallback(() => {
+    if (showButtonsTimeoutRef.current) {
+      clearTimeout(showButtonsTimeoutRef.current);
+      showButtonsTimeoutRef.current = null;
+    }
+  }, []);
   
   // Create stable deactivateButtons function with useCallback
-  const deactivateButtons = React.useCallback(() => {
+  const deactivateButtons = React.useCallback((options?: { preserveAccessCache?: boolean }) => {
     console.log("Deactivating buttons until next notification");
     if (deactivateTimeoutRef.current) {
       clearTimeout(deactivateTimeoutRef.current);
       deactivateTimeoutRef.current = null;
+    }
+    clearShowButtonsTimeout();
+    const accessCacheKey = pendingAccessCacheKeyRef.current;
+    if (accessCacheKey && !options?.preserveAccessCache) {
+      clearPreparedAccess(accessCacheKey);
+      clearAccessConfirmation(accessCacheKey);
+      pendingAccessCacheKeyRef.current = null;
     }
     setMessageState(false);
     setPendingQRData(null);
@@ -50,16 +74,22 @@ export default function useFirebaseMessaging(
     if (setButtonsEnabled) {
       setButtonsEnabled(false);
     }
-  }, [setMessageState, setAccessState, setButtonsEnabled]);
+  }, [clearShowButtonsTimeout, setMessageState, setAccessState, setButtonsEnabled]);
   
   // Function to process QR data manually when user allows
   const processQRData = React.useCallback(async () => {
     if (pendingQRData) {
       try {
-        await handleQRScan(pendingQRData);       
-        // Clear pending data and deactivate after processing
+        if (pendingAccessCacheKeyRef.current) {
+          markAccessConfirmed(pendingAccessCacheKeyRef.current, Date.now());
+        }
+        const qrPayload = pendingQRData;
+        const startedAt = Date.now();
+        deactivateButtons({ preserveAccessCache: true });
+        console.log(`[Access timing] UI closed after confirm in ${Date.now() - startedAt} ms`);
+        await handleQRScan(qrPayload);       
+        // Clear pending data after processing
         setPendingQRData(null);
-        deactivateButtons();
       } catch (error) {
         console.error("Error in handleQRScan:", error);
         // Also deactivate on error
@@ -67,55 +97,122 @@ export default function useFirebaseMessaging(
       }
     }
   }, [pendingQRData, deactivateButtons]);
+
+  const handleIncomingMessage = React.useCallback(async (remoteMessage: any) => {
+    console.log('FCM message received:', {
+      messageId: remoteMessage?.messageId,
+      hasData: Boolean(remoteMessage?.data),
+      hasNotification: Boolean(remoteMessage?.notification),
+    });
+
+    const data = remoteMessage?.data ?? {};
+    const action = data.action;
+    const qrData = data.qrData ?? data.qr;
+
+    let parsedQR: any = null;
+    if (typeof qrData === 'string') {
+      try {
+        parsedQR = JSON.parse(qrData);
+      } catch {
+        parsedQR = null;
+      }
+    } else if (qrData && typeof qrData === 'object') {
+      parsedQR = qrData;
+    }
+
+    if (parsedQR?.type === 'user-credential-decryption') {
+      const credentials = Array.isArray(parsedQR.credentials) ? parsedQR.credentials : [];
+      const credentialSecret = await getCredentialSecret();
+      const decryptedCredentials: string[] = [];
+
+      for (const credential of credentials) {
+        const encryptedValue = await decryptFromBase64(credential, credentialSecret);
+        if (encryptedValue !== null) {
+          decryptedCredentials.push(encryptedValue);
+        }
+      }
+      return;
+    }
+
+    const shouldShowButtons =
+      action === 'show_allow_close' ||
+      parsedQR?.action === 'show_allow_close' ||
+      Boolean(qrData) ||
+      Boolean(remoteMessage?.notification) ||
+      Boolean(remoteMessage?.messageId);
+
+    if (!shouldShowButtons) {
+      return;
+    }
+
+    clearShowButtonsTimeout();
+
+    if (typeof qrData === 'string') {
+      setPendingQRData(qrData);
+    } else if (qrData !== undefined && qrData !== null) {
+      setPendingQRData(JSON.stringify(qrData));
+    } else {
+      setPendingQRData(null);
+    }
+
+    if (parsedQR?.qrCacheKey) {
+      pendingAccessCacheKeyRef.current = parsedQR.qrCacheKey;
+    }
+
+    if (parsedQR?.type === 'domain-login' || parsedQR?.type === 'applications') {
+      prepareAccess(parsedQR).catch(error => {
+        console.error('Error preparing access on FCM arrival:', error);
+      });
+    }
+
+    showButtonsTimeoutRef.current = setTimeout(() => {
+      setMessageState(true);
+      if (setButtonsEnabled) {
+        setButtonsEnabled(true);
+      }
+      showButtonsTimeoutRef.current = null;
+    }, SHOW_BUTTONS_DELAY_MS);
+
+    if (deactivateTimeoutRef.current) {
+      clearTimeout(deactivateTimeoutRef.current);
+      deactivateTimeoutRef.current = null;
+    }
+    deactivateTimeoutRef.current = setTimeout(() => {
+      deactivateButtons();
+    }, 10000);
+  }, [clearShowButtonsTimeout, deactivateButtons, setButtonsEnabled, setMessageState]);
   
   useEffect(() => {
-    const unsubscribeMessage = messaging().onMessage(async remoteMessage => {
-      const {action, qrData} = remoteMessage.data;
+    const unsubscribeMessage = messaging().onMessage(handleIncomingMessage);
+    const unsubscribeNotificationOpened = messaging().onNotificationOpenedApp(handleIncomingMessage);
 
-          let parsedQR: any = null;
-          if (typeof qrData === 'string') {
-            parsedQR = JSON.parse(qrData);
-          } else if (qrData && typeof qrData === 'object') {
-            parsedQR = qrData;
-          }
-         
-          if (parsedQR?.type === 'user-credential-decryption') {
-            let credentials = parsedQR.credentials;
-            const decryptedCredentials: string[] = [];
-            for (const credential of credentials) {
-              const encryptedValue = await decryptFromBase64(credential, await getCredentialSecret());
-              if (encryptedValue !== null) {
-                decryptedCredentials.push(encryptedValue);
-              }
-            };           
-            return;
-          }
-
-      if (action === 'show_allow_close') {
-        // Activate notification and enable buttons
-        setMessageState(true);
-        if (setButtonsEnabled) {
-          setButtonsEnabled(true);
+    messaging()
+      .getInitialNotification()
+      .then(initialMessage => {
+        if (initialMessage) {
+          handleIncomingMessage(initialMessage);
         }
-        
-        // Store the QR data for later processing - DON'T process yet!
-        setPendingQRData(qrData?.toString() || null);
-        
-        // Set timer to deactivate after 10 seconds
-        deactivateTimeoutRef.current = setTimeout(() => {
-          deactivateButtons();
-        }, 10000);
-      }
-    });
+      })
+      .catch(error => {
+        console.error('Error reading initial notification:', error);
+      });
 
     return () => {
       if (deactivateTimeoutRef.current) {
         clearTimeout(deactivateTimeoutRef.current);
         deactivateTimeoutRef.current = null;
       }
-      unsubscribeMessage();     
+      clearShowButtonsTimeout();
+      const accessCacheKey = pendingAccessCacheKeyRef.current;
+      if (accessCacheKey) {
+        clearPreparedAccess(accessCacheKey);
+        clearAccessConfirmation(accessCacheKey);
+        pendingAccessCacheKeyRef.current = null;
+      }
+      unsubscribeMessage();
+      unsubscribeNotificationOpened();
     };
-  }, [setMessageState, setAccessState, setButtonsEnabled, deactivateButtons]);
+  }, [clearShowButtonsTimeout, handleIncomingMessage]);
   
   // Return both deactivateButtons and processQRData functions
   return { deactivateButtons, processQRData };

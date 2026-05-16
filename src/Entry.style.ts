@@ -99,6 +99,26 @@ export default StyleSheet.create({
   scannerContainer: {
     flex: 1,
   },
+  resetContainer: {
+    flex: 1,
+  },
+  resetBackButton: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    zIndex: 10,
+    borderWidth: 1,
+    borderColor: COLORS.white,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: COLORS.light_dark,
+  },
+  resetBackButtonText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '600',
+  },
   button: {
     padding: 10,
     width: 150,

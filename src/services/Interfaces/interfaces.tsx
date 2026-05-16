@@ -99,12 +99,15 @@ export interface RequestCredentialsToEncrypt {
 }
 
 export interface Access {
-  domain: string;
-  domainProcessId: string;
-  xExtensionAuthOne: string;
-  type: 'domain-login';
-  source: string;
-  iv: string;
+  domain?: string;
+  domainProcessId?: string;
+  xExtensionAuthOne?: string;
+  type?: 'domain-login';
+  source?: string;
+  iv?: string;
+  qrCacheKey:string;
+  credentialCacheKey?: string;
+  publicKey?: string;
 }
 
 export interface SecureDevice {  
@@ -117,11 +120,39 @@ export interface SecureDevice {
   validCommunication: [];
 }
 
+// Request body for first domain-read API call (credentials fetch)
+// Contains loginData fields to test individually which ones are actually needed
+export interface AccessCredentialsRequest {
+  // Device identity (required)
+  publicId?: string;
+  privateId: string;
+  email?: string;
+  
+  // Cache keys
+  qrCacheKey: string;
+  credentialCacheKey?: string;
+  
+  // QR payload fields - to be tested individually
+  domainProcessId?: string;
+  xExtensionAuthOne?: string;
+  type?: string;
+  source?: string;
+  iv?: string;
+  publicKey?: string;
+  domain?:string;
+  
+  // Standard fields
+  update: false;
+  credentials?: [];
+  userPublicId?: string;
+}
+
 export interface AccessExtended
   extends Omit<Access, 'xExtensionAuthOne'>,
     UserProperties {
       update: false,
-      credentials: string[];
+      credentials: any;
+      rsaEncryptedKey?: string;
     }
 
 export interface Delete {
@@ -138,7 +169,7 @@ export interface DeleteExtended
 
 export interface UserCredentialDecryption {
   type: 'user-credential-decryption';
-  credentials: string[];
+  credentials: [];
 }
     
 // Union type for all QR data types

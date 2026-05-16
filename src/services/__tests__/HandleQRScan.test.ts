@@ -40,4 +40,22 @@ describe('handleQRScan', () => {
     await expect(handleQRScan(JSON.stringify({ type: 'unknown-route' }))).resolves.toBe(false);
     await expect(handleQRScan('{invalid')).resolves.toBe(false);
   });
+
+  it('treats non-json scanner token as domain-login and forwards raw payload', async () => {
+    mockHandler.access.mockResolvedValueOnce(true);
+
+    await expect(handleQRScan('638a87aca8b2ee6a2d0e331ba641fbd3')).resolves.toEqual({
+      type: 'domain-login',
+      result: true,
+    });
+
+    expect(mockHandler.access).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'domain-login',
+        qrCacheKey: '638a87aca8b2ee6a2d0e331ba641fbd3',
+        credentialCacheKey: '638a87aca8b2ee6a2d0e331ba641fbd3',
+        rawQrData: '638a87aca8b2ee6a2d0e331ba641fbd3',
+      }),
+    );
+  });
 });

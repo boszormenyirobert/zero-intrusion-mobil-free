@@ -7,6 +7,13 @@ jest.mock('../HandleQRScan', () => ({
   handleQRScan: jest.fn(),
 }));
 
+jest.mock('../HTTP/PasswordManager/Shared/Access', () => ({
+  prepareAccess: jest.fn(async () => true),
+  clearPreparedAccess: jest.fn(),
+  markAccessConfirmed: jest.fn(),
+  clearAccessConfirmation: jest.fn(),
+}));
+
 jest.mock('../Encrypter', () => ({
   decryptFromBase64: jest.fn(async value => `decrypted:${value}`),
 }));
@@ -18,6 +25,7 @@ jest.mock('../DeviceStore', () => ({
 import useFirebaseMessaging, { getFcmToken } from '../Firebase';
 import { handleQRScan } from '../HandleQRScan';
 import { decryptFromBase64 } from '../Encrypter';
+import { prepareAccess } from '../HTTP/PasswordManager/Shared/Access';
 
 const messagingMock = messaging as unknown as {
   __mock: {
@@ -33,12 +41,10 @@ const flushPromises = () => Promise.resolve();
 
 describe('Firebase messaging service', () => {
   afterEach(() => {
-    try {
-      jest.runOnlyPendingTimers();
-    } catch {
-      // No fake timers active.
+    if (jest.isMockFunction(global.setTimeout)) {
+      jest.clearAllTimers();
+      jest.useRealTimers();
     }
-    jest.useRealTimers();
   });
 
   it('returns cached FCM tokens when available', async () => {
@@ -97,6 +103,13 @@ describe('Firebase messaging service', () => {
       });
     });
 
+    expect(setMessageState).not.toHaveBeenCalledWith(true);
+    expect(setButtonsEnabled).not.toHaveBeenCalledWith(true);
+
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
     expect(setMessageState).toHaveBeenCalledWith(true);
     expect(setButtonsEnabled).toHaveBeenCalledWith(true);
 
@@ -120,7 +133,7 @@ describe('Firebase messaging service', () => {
 
     expect(decryptFromBase64).toHaveBeenCalledTimes(2);
 
-    await act(async () => {
+    act(() => {
       jest.advanceTimersByTime(10000);
     });
 
@@ -132,7 +145,57 @@ describe('Firebase messaging service', () => {
     });
 
     expect(messagingMock.__mock.state.unsubscribe).toHaveBeenCalled();
-    jest.runOnlyPendingTimers();
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  it('starts access preparation immediately for access notifications', async () => {
+    jest.useFakeTimers();
+
+    const setMessageState = jest.fn();
+    const setButtonsEnabled = jest.fn();
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    const Harness = () => {
+      useFirebaseMessaging(setMessageState, undefined, setButtonsEnabled);
+      return null;
+    };
+
+    await act(async () => {
+      renderer = ReactTestRenderer.create(<Harness />);
+      await flushPromises();
+    });
+
+    await act(async () => {
+      await messagingMock.__mock.triggerMessage({
+        data: {
+          action: 'show_allow_close',
+          qrData: {
+            type: 'domain-login',
+            qrCacheKey: 'cache-key-1',
+          },
+        },
+      });
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
+    expect(prepareAccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'domain-login',
+        qrCacheKey: 'cache-key-1',
+      }),
+    );
+    expect(setMessageState).toHaveBeenCalledWith(true);
+    expect(setButtonsEnabled).toHaveBeenCalledWith(true);
+
+    await act(async () => {
+      renderer!.unmount();
+    });
+
+    jest.clearAllTimers();
     jest.useRealTimers();
   });
 
@@ -166,6 +229,10 @@ describe('Firebase messaging service', () => {
       });
     });
 
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
     await act(async () => {
       await hookValue!.processQRData();
       await flushPromises();
@@ -181,7 +248,7 @@ describe('Firebase messaging service', () => {
     });
 
     expect(messagingMock.__mock.state.unsubscribe).toHaveBeenCalled();
-    jest.runOnlyPendingTimers();
+    jest.clearAllTimers();
     consoleSpy.mockRestore();
     jest.useRealTimers();
   });
@@ -218,6 +285,10 @@ describe('Firebase messaging service', () => {
       });
     });
 
+    await act(async () => {
+      jest.advanceTimersByTime(500);
+    });
+
     expect(decryptFromBase64).toHaveBeenCalledTimes(2);
     expect(setMessageState).not.toHaveBeenCalledWith(true);
 
@@ -230,11 +301,15 @@ describe('Firebase messaging service', () => {
       });
     });
 
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
     await act(async () => {
       renderer!.unmount();
     });
 
-    await act(async () => {
+    act(() => {
       jest.advanceTimersByTime(10000);
     });
 
@@ -269,7 +344,11 @@ describe('Firebase messaging service', () => {
       });
     });
 
-    await act(async () => {
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
+    act(() => {
       jest.advanceTimersByTime(10000);
     });
 
@@ -332,7 +411,14 @@ describe('Firebase messaging service', () => {
     });
 
     await act(async () => {
+      jest.advanceTimersByTime(1000);
+    });
+
+    await act(async () => {
       await hookValue!.processQRData();
+    });
+
+    await act(async () => {
       jest.advanceTimersByTime(10000);
     });
 

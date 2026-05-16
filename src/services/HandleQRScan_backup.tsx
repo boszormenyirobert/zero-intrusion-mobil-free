@@ -1,24 +1,5 @@
-import * as i from '../services/Interfaces/interfaces';
+import * as i from './Interfaces/interfaces';
 import { RequestHandler } from './HTTP/RequestHandler';
-
-type ParsedQRInput = i.QRData | (Partial<i.Access> & { type: 'domain-login' });
-
-function parseQRInput(data: string): ParsedQRInput | null {
-  const trimmedData = data.trim();
-
-  // Keep malformed JSON invalid, but allow opaque token payloads from scanner QR values.
-  if (trimmedData.startsWith('{') || trimmedData.startsWith('[')) {
-    return JSON.parse(trimmedData) as i.QRData;
-  }
-
-  return {
-    type: 'domain-login',
-    qrCacheKey: trimmedData,
-    credentialCacheKey: trimmedData,
-    source: 'extension',
-    rawQrData: trimmedData,
-  } as ParsedQRInput;
-}
 
 export async function handleQRScan(data:string) {
   const handler = new RequestHandler();
@@ -60,10 +41,7 @@ export async function handleQRScan(data:string) {
 
   try {
     if(!data) return; 
-    const qrInput = parseQRInput(data);
-    if (!qrInput) {
-      return false;
-    }
+    const qrInput: i.QRData = JSON.parse(data);
     console.log('Parsed QR Input:', qrInput);
 
     const routeHandler = handleRoute[toCamelCase(qrInput.type)];

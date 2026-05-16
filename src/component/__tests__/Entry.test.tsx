@@ -1,6 +1,7 @@
 import React from 'react';
-import { Pressable, Text } from 'react-native';
+import { Text } from 'react-native';
 import ReactTestRenderer, { act } from 'react-test-renderer';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 const mockDeactivateButtons = jest.fn();
 const mockProcessQRData = jest.fn();
@@ -11,36 +12,36 @@ let mockAutoQRScannerProps: any;
 let mockCloneProps: any;
 
 jest.mock('../Cards/Cards', () => {
-  const React = require('react');
-  const { Text } = require('react-native');
+  const ReactMock = require('react');
+  const { Text: RNText } = require('react-native');
   return function MockCards({ type, action }) {
-    return React.createElement(Text, { onPress: action }, type);
+    return ReactMock.createElement(RNText, { onPress: action }, type);
   };
 });
 
 jest.mock('../AutoQRScanner/AutoQRScanner', () => {
-  const React = require('react');
-  const { Text } = require('react-native');
+  const ReactMock = require('react');
+  const { Text: RNText } = require('react-native');
   return function MockAutoQRScanner(props) {
     mockAutoQRScannerProps = props;
-    return React.createElement(Text, null, 'AUTO_QR_SCANNER');
+    return ReactMock.createElement(RNText, null, 'AUTO_QR_SCANNER');
   };
 });
 
 jest.mock('../UserRegistration/UserRegistration', () => {
-  const React = require('react');
-  const { Text } = require('react-native');
+  const ReactMock = require('react');
+  const { Text: RNText } = require('react-native');
   return function MockUserRegistration() {
-    return React.createElement(Text, null, 'USER_REGISTRATION_VIEW');
+    return ReactMock.createElement(RNText, null, 'USER_REGISTRATION_VIEW');
   };
 });
 
 jest.mock('../Clone/Clone', () => {
-  const React = require('react');
-  const { Text } = require('react-native');
+  const ReactMock = require('react');
+  const { Text: RNText } = require('react-native');
   return function MockClone(props) {
     mockCloneProps = props;
-    return React.createElement(Text, null, 'CLONE_VIEW');
+    return ReactMock.createElement(RNText, null, 'CLONE_VIEW');
   };
 });
 
@@ -49,27 +50,29 @@ jest.mock('../../services/HandleQRScan', () => ({
 }));
 
 jest.mock('../../services/Firebase', () => {
-  const React = require('react');
+  const ReactMock = require('react');
+  const useMockFirebaseMessaging = (setMessageState, setAccessState, setButtonsEnabled) => {
+    ReactMock.useEffect(() => {
+      if (mockMessageVisible) {
+        setMessageState(true);
+      }
+      if (setAccessState) {
+        setAccessState(mockAccessAllowed);
+      }
+      if (mockEnableButtons) {
+        setButtonsEnabled(true);
+      }
+    }, [setAccessState, setButtonsEnabled, setMessageState]);
+
+    return {
+      deactivateButtons: mockDeactivateButtons,
+      processQRData: mockProcessQRData,
+    };
+  };
+
   return {
     __esModule: true,
-    default: (setMessageState, setAccessState, setButtonsEnabled) => {
-      React.useEffect(() => {
-        if (mockMessageVisible) {
-          setMessageState(true);
-        }
-        if (setAccessState) {
-          setAccessState(mockAccessAllowed);
-        }
-        if (mockEnableButtons) {
-          setButtonsEnabled(true);
-        }
-      }, [setAccessState, setButtonsEnabled, setMessageState]);
-
-      return {
-        deactivateButtons: mockDeactivateButtons,
-        processQRData: mockProcessQRData,
-      };
-    },
+    default: useMockFirebaseMessaging,
   };
 });
 
@@ -104,12 +107,12 @@ describe('Entry workflow', () => {
     mockAccessAllowed = false;
     mockDeactivateButtons.mockClear();
     mockProcessQRData.mockClear();
-    (getProfiles as jest.Mock).mockResolvedValue([
+    (getProfiles as any).mockResolvedValue([
       { email: 'first@example.com' },
       { email: 'second@example.com' },
     ]);
-    (getActiveProfile as jest.Mock).mockResolvedValue({ email: 'first@example.com' });
-    (setActiveProfileByEmail as jest.Mock).mockResolvedValue({ email: 'second@example.com' });
+    (getActiveProfile as any).mockResolvedValue({ email: 'first@example.com' });
+    (setActiveProfileByEmail as any).mockResolvedValue({ email: 'second@example.com' });
   });
 
   it('loads profiles, allows selection, and handles scanner results', async () => {
@@ -165,6 +168,12 @@ describe('Entry workflow', () => {
     });
     expect(renderer!.root.findAllByType(Text).map(node => node.props.children)).toContain('USER_REGISTRATION_VIEW');
 
+    await act(async () => {
+      renderer!.root.findByProps({ testID: 'reset-back-button' }).props.onPress();
+      await flushPromises();
+    });
+    expect(renderer!.root.findAllByType(Text).map(node => node.props.children)).toContain('scanCode');
+
     let cloneRenderer: ReactTestRenderer.ReactTestRenderer;
     await act(async () => {
       cloneRenderer = ReactTestRenderer.create(<Entry setValidUser={jest.fn()} />);
@@ -217,7 +226,7 @@ describe('Entry workflow', () => {
   });
 
   it('keeps the current profile when profile selection fails', async () => {
-    (setActiveProfileByEmail as jest.Mock).mockResolvedValueOnce(null);
+    (setActiveProfileByEmail as any).mockResolvedValueOnce(null);
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
@@ -240,7 +249,7 @@ describe('Entry workflow', () => {
   });
 
   it('deactivates buttons when QR handling throws', async () => {
-    (handleQRScan as jest.Mock).mockRejectedValueOnce(new Error('scan-failed'));
+    (handleQRScan as any).mockRejectedValueOnce(new Error('scan-failed'));
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
     await act(async () => {
@@ -265,8 +274,8 @@ describe('Entry workflow', () => {
     mockEnableButtons = true;
     mockMessageVisible = true;
     mockAccessAllowed = true;
-    (getProfiles as jest.Mock).mockResolvedValueOnce([]);
-    (getActiveProfile as jest.Mock).mockResolvedValueOnce(null);
+    (getProfiles as any).mockResolvedValueOnce([]);
+    (getActiveProfile as any).mockResolvedValueOnce(null);
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
     await act(async () => {
@@ -302,8 +311,8 @@ describe('Entry workflow', () => {
     mockEnableButtons = false;
     mockMessageVisible = true;
     mockAccessAllowed = false;
-    (getProfiles as jest.Mock).mockResolvedValueOnce([{ email: 'first@example.com' }]);
-    (getActiveProfile as jest.Mock).mockResolvedValueOnce(null);
+    (getProfiles as any).mockResolvedValueOnce([{ email: 'first@example.com' }]);
+    (getActiveProfile as any).mockResolvedValueOnce(null);
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
     await act(async () => {
