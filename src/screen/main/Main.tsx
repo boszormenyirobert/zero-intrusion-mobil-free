@@ -41,15 +41,6 @@ export default function MainScreen() {
       const phone = await getPhone();
       const privacyPolicy = await getPrivacyPolicy();
 
-      console.log('privateId from storage !!! :', privateId);
-      console.log('publicId from storage !!! :', publicId);
-      console.log('secret from storage !!! :', secret);
-      console.log('credentialSecret from storage !!! :', credentialSecret);
-      console.log('fcmToken from storage !!! :', fcmToken);
-      console.log('email from storage !!! :', email);
-      console.log('phone from storage !!! :', phone);
-      console.log('privacyPolicy from storage !!! :', privacyPolicy);
-
       // Check private id,public id, secret, email, phone and policy acceptance, before allowing user to access main app
       if (!privateId || !publicId || !secret || !credentialSecret || !email || !phone || !privacyPolicy) {
         setValidUser(false);

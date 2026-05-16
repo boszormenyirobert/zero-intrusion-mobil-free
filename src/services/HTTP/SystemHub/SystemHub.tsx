@@ -63,7 +63,6 @@ export const SystemHubRegistration = async (qrJson: i.HubRegistration): Promise<
     }
 
     const result = await response.json();
-    console.log('Registration successful:', result);
     return true;
 
   } catch (error) {
@@ -87,8 +86,6 @@ export const SystemHubLogin = async (qrJson: i.HubLogin): Promise<boolean> => {
       email: await getEmail()        
     };
 
-    console.log('Login Body:', body);
-
     // Make API request
     const requestOptions: RequestInit = {
       method: 'POST',
@@ -110,7 +107,6 @@ export const SystemHubLogin = async (qrJson: i.HubLogin): Promise<boolean> => {
     }
 
     const result = await response.json();
-    console.log('Login successful:', result);
     return true;
 
   } catch (error) {
@@ -136,8 +132,6 @@ export const SystemHubSecureDevice = async (qrJson: i.SecureDevice): Promise<boo
       ...inputData        
     };
 
-    console.log('Secure Device Body:', body);
-
     // Make API request
     const requestOptions: RequestInit = {
       method: 'POST',
@@ -159,7 +153,6 @@ export const SystemHubSecureDevice = async (qrJson: i.SecureDevice): Promise<boo
     }
 
     const result = await response.json();
-    console.log('Process successful:', result);
     return true;
 
   } catch (error) {

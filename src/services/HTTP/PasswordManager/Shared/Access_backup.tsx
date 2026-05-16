@@ -56,7 +56,6 @@ export const Access = async (qrJson: i.Access)=> {
       update: false,
       credentials: decryptedCredentials    
     };
-    console.log('Access path:', path);
     // Make API request
     const requestOptions: RequestInit = {
       method: 'POST',
@@ -78,7 +77,6 @@ export const Access = async (qrJson: i.Access)=> {
     }
 
     const result = await response.json();
-    console.log('Login successful:', result);
     return true;
 
   } catch (error) {

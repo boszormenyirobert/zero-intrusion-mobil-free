@@ -54,7 +54,6 @@ export const Cards: React.FC<CardProps> = ({
     const enhancedAction = () => {
         // Only allow action if button is enabled (for allow/decline buttons)
         if (!singleRow && !enabled) {
-            console.log("� Button is disabled - no action taken");
             return;
         }
         

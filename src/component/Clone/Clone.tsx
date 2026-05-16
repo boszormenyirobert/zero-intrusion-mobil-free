@@ -31,11 +31,9 @@ export default function Clone({ onResult, setView }: AutoQRScannerProps) {
   } as const;
 
   async function onClick(optionKey: keyof typeof options) {
-    console.log('Clicked', optionKey);
     if (optionKey === 'sender') {
       setShowSender(true);
     } else if (optionKey === 'receiver') {
-      console.log("Receiver option clicked");
       setShowReceiver(true);
     }
   }

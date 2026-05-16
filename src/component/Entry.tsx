@@ -82,15 +82,12 @@ export function ScanCode({
     }
 
     const confirmedAt = Date.now();
-    console.log('User confirmed request. Starting processing timer.');
-    
     setUserAccessState(true);
     
     // Process the QR data now that user has allowed access
     try {
       await processQRData();
       const elapsedMs = Date.now() - confirmedAt;
-      console.log(`Confirmed request processed in ${elapsedMs} ms.`);
     } catch (error) {
       const elapsedMs = Date.now() - confirmedAt;
       console.error(`Confirmed request failed after ${elapsedMs} ms:`, error);

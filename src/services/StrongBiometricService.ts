@@ -28,11 +28,7 @@ export class StrongBiometricService {
     try {
       const { available, biometryType } = await this.rnBiometrics.isSensorAvailable();
       
-      console.log('🔐 Strong biometric sensor available:', available);
-      console.log('🔐 Strong biometric type:', biometryType);
-      
       if (!available) {
-        console.log('❌ No biometric sensor available');
         return false;
       }
 
@@ -44,11 +40,9 @@ export class StrongBiometricService {
       const isFaceRecognition = biometryType === BiometryTypes.FaceID;
       
       if (isFaceRecognition) {
-        console.log('❌ Face recognition detected - BLOCKED for strong biometric policy');
         return false;
       }
 
-      console.log('🔐 Strong biometric available (fingerprint/TouchID only):', isStrongBiometric);
       return isStrongBiometric;
     } catch (error) {
       console.error('❌ Error checking strong biometric availability:', error);
@@ -102,19 +96,13 @@ export class StrongBiometricService {
         };
       }
 
-      console.log('🔐 Starting STRONG BIOMETRIC ONLY authentication...');
-      console.log('🔐 ===== STRONG BIOMETRIC SERVICE ACTIVE =====');
-
       // Use simplePrompt for strong biometric authentication
       const result = await this.rnBiometrics.simplePrompt({
         promptMessage: 'Strong Biometric Authentication',
         cancelButtonText: 'Cancel'
       });
 
-      console.log('🔐 Strong biometric authentication result:', result);
-
       if (result.success) {
-        console.log('✅ Strong biometric authentication successful');
         const capabilities = await this.getCapabilities();
         return {
           success: true,
@@ -127,7 +115,6 @@ export class StrongBiometricService {
         };
       } else {
         const errorMessage = result.error || 'Strong biometric authentication failed';
-        console.log('❌ Strong biometric authentication failed:', errorMessage);
         return {
           success: false,
           error: errorMessage
@@ -161,7 +148,6 @@ export class StrongBiometricService {
   static async createKeys(): Promise<boolean> {
     try {
       const { publicKey } = await this.rnBiometrics.createKeys();
-      console.log('🔐 Hardware-backed biometric keys created:', !!publicKey);
       return !!publicKey;
     } catch (error) {
       console.error('❌ Error creating biometric keys:', error);

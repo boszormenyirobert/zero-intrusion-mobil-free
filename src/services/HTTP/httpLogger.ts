@@ -39,19 +39,7 @@ const parseResponseBody = async (response: Response) => {
 };
 
 export const logHttpRequest = (label: string, url: string, options: RequestInit) => {
-  console.log(`[${getTimestamp()}] [HTTP] ${label} request`, {
-    url,
-    method: options.method ?? 'GET',
-    headers: normalizeHeaders(options.headers),
-  });
 };
 
 export const logHttpResponse = async (label: string, response: Response) => {
-  console.log(`[${getTimestamp()}] [HTTP] ${label} response`, {
-    url: response.url,
-    status: response.status,
-    statusText: response.statusText,
-    ok: response.ok,
-    body: await parseResponseBody(response),
-  });
 };

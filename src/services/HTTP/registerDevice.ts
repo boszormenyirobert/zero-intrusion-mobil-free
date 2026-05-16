@@ -65,8 +65,6 @@ export const requestDeviceRegistration = async (
       const normalizedBaseUrl = normalizeApiBaseUrl(apiBaseUrl);
       const apiConfig = buildApiConfig(normalizedBaseUrl);
 
-      console.log('Attempting to connect to:', apiConfig.API_DEVICE_REGISTRATION);
-      
       const requestOptions: RequestInit = {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
@@ -75,9 +73,6 @@ export const requestDeviceRegistration = async (
       logHttpRequest('requestDeviceRegistration', apiConfig.API_DEVICE_REGISTRATION, requestOptions);
       const response = await fetch(apiConfig.API_DEVICE_REGISTRATION, requestOptions);
       await logHttpResponse('requestDeviceRegistration', response);
-
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
 
       const data = await response.json();
       const deviceSecrets = extractDeviceSecrets(data);

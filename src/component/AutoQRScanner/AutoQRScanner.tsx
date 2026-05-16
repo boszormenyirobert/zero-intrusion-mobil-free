@@ -94,7 +94,6 @@ export default function AutoQRScanner({
         return;
       }
 
-      console.log('Scanned codes:', codes);
       processScannedCode(codes[0].value || '').catch(error => {
         console.error('QR processing failed:', error);
       });

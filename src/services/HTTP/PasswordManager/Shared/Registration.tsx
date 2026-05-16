@@ -19,7 +19,6 @@ export const Registration = async (qrJson: i.Registration) => {
 
   try {
       const rawCredentials = await getRawCredentialsRequest(qrJson);
-      console.log('Raw credentials retrieved:', rawCredentials);  
       await registrateEncryptedCredentialsRequest(qrJson, path, rawCredentials);          
   } catch (error) {
     console.error('Registration error:', error);
@@ -91,7 +90,6 @@ const registrateEncryptedCredentialsRequest = async (qrJson: i.Registration, pat
   logHttpRequest('PasswordManagerRegistration.saveCredentials', path, requestOptions);
   const response_final = await fetch(path, requestOptions);
   await logHttpResponse('PasswordManagerRegistration.saveCredentials', response_final);
-  console.log('Registration request sent:', path, body_to_encrypt);
   // Check response status
   if (!response_final.ok) {
     console.error(
@@ -103,7 +101,6 @@ const registrateEncryptedCredentialsRequest = async (qrJson: i.Registration, pat
   }
 
   const result = await response_final.json();
-  console.log('Registration response received:', result);
 };
 
 const buildEncryptedCredentialsPayload = async (

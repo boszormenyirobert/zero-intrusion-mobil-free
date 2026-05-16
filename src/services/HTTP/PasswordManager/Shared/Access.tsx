@@ -8,7 +8,6 @@ import {
   getCredentialSecret,
 } from '../../../DeviceStore';
 import { encryptToBase64, decryptFromBase64 } from '../../../Encrypter';
-import { logHttpRequest, logHttpResponse } from '../../httpLogger';
 import { encryptWithGeneratedAesKey } from './AES';
 import { encryptWithRsaPublicKey } from './RSA';
 
@@ -45,8 +44,6 @@ type PreparedAccess = {
     application?: string;
   }>;
   encryptedPayload: EncryptedPayload | null;
-  startedAt: number;
-  preparedAt: number;
   domainProcessId?: string;
   publicKey?: string;
 };
@@ -67,10 +64,6 @@ const loadAccessIdentity = async (): Promise<AccessIdentity> => {
     privateId: await encryptToBase64(privateId, secret),
     email,
   };
-};
-
-const logStep = (startedAt: number, label: string) => {
-  console.log(`[Access timing] ${label}: ${Date.now() - startedAt} ms`);
 };
 
 const getAccessCacheKey = (qrJson: i.Access) => qrJson.qrCacheKey;
@@ -148,22 +141,18 @@ const normalizePublicKey = (publicKey: unknown): string | undefined => {
 
 
 const buildPreparedAccess = async (qrJson: i.Access): Promise<PreparedAccess | false> => {
-  const startedAt = Date.now();
-  console.log('[Access timing] prepare flow started');
   const accessIdentity = await loadAccessIdentity();
 
   const encryptedCredentials = await getEncryptedCredentials(
     qrJson,
     accessIdentity,
   ) as EncryptedCredentialsResponse | false;
-  logStep(startedAt, 'after getEncryptedCredentials');
 
   if (!encryptedCredentials || !Array.isArray(encryptedCredentials.credentials)) {
     return false;
   }
 
   const decryptedCredentials = await decryptAccessCredentials(encryptedCredentials.credentials);
-  logStep(startedAt, 'after credential decryption');
 
   const resolvedPublicKey = normalizePublicKey(encryptedCredentials.publicKey)
     ?? normalizePublicKey(qrJson.publicKey);
@@ -176,10 +165,7 @@ const buildPreparedAccess = async (qrJson: i.Access): Promise<PreparedAccess | f
   const encryptedPayload: EncryptedPayload | null = aesResult
     ? { credentials: aesResult.encryptedData, rsaEncryptedKey, iv: aesResult.iv }
     : null;
-  const preparedAt = Date.now();
-  logStep(startedAt, 'after payload encryption (prepare)');
 
-  // domainProcessId átvétele a decrypted response-ból, ha van
   const domainProcessId = encryptedCredentials.domainProcessId || qrJson.domainProcessId;
 
   return {
@@ -187,22 +173,9 @@ const buildPreparedAccess = async (qrJson: i.Access): Promise<PreparedAccess | f
     accessIdentity,
     decryptedCredentials,
     encryptedPayload,
-    startedAt,
-    preparedAt,
     domainProcessId,
     publicKey: resolvedPublicKey,
   };
-};
-
-const logPrepareCacheState = (qrJson: i.Access, label: string) => {
-  const cacheKey = getAccessCacheKey(qrJson);
-  if (!cacheKey) {
-    return;
-  }
-
-  console.log(
-    `[Access timing] ${label}: ${accessPreparationCache.has(cacheKey) ? 'cached' : 'not-cached'}`,
-  );
 };
 
 const getPreparedAccess = async (qrJson: i.Access): Promise<PreparedAccess | false> => {
@@ -213,11 +186,9 @@ const getPreparedAccess = async (qrJson: i.Access): Promise<PreparedAccess | fal
 
   const cachedPreparation = accessPreparationCache.get(cacheKey);
   if (cachedPreparation) {
-    console.log('[Access timing] reusing prepared access cache');
     return await cachedPreparation;
   }
 
-  console.log('[Access timing] preparing access cache');
   const preparationPromise = buildPreparedAccess(qrJson)
     .then(result => {
       if (result === false) {
@@ -238,16 +209,8 @@ const getPreparedAccess = async (qrJson: i.Access): Promise<PreparedAccess | fal
 };
 
 const submitPreparedAccess = async (preparedAccess: PreparedAccess): Promise<boolean> => {
-  const { qrJson, accessIdentity, decryptedCredentials, encryptedPayload, startedAt, preparedAt, domainProcessId } = preparedAccess;
-  const confirmedAt = consumeAccessConfirmation(getAccessCacheKey(qrJson));
-  if (typeof confirmedAt === 'number') {
-    const waitMs = preparedAt - confirmedAt;
-    if (waitMs > 0) {
-      console.log(`[Access timing] confirm wait for prepare: ${waitMs} ms (confirm arrived early)`);
-    } else {
-      console.log(`[Access timing] confirm wait for prepare: 0 ms (prepare was already ready)`);
-    }
-  }
+  const { qrJson, accessIdentity, decryptedCredentials, encryptedPayload, domainProcessId } = preparedAccess;
+  consumeAccessConfirmation(getAccessCacheKey(qrJson));
   const path = qrJson.type === 'domain-login'
     ? await getApiUrl('API_LOGIN')
     : await getApiUrl('API_ALLOW_APPLICATION_LIST');
@@ -255,11 +218,6 @@ const submitPreparedAccess = async (preparedAccess: PreparedAccess): Promise<boo
   try {
     const { xExtensionAuthOne, ...loginData } = qrJson;
     const authToken = xExtensionAuthOne || '';
-
-    console.log(
-      'PasswordManagerAccess.submitCredentials: credentials count',
-      decryptedCredentials.length,
-    );
 
     const body: i.AccessExtended = {
       ...loginData,
@@ -272,13 +230,7 @@ const submitPreparedAccess = async (preparedAccess: PreparedAccess): Promise<boo
       iv: encryptedPayload?.iv ?? loginData.iv,
       domainProcessId: domainProcessId ?? loginData.domainProcessId,
     };
-     if (path.includes('/api/credential-hub/domain/read/credential')) {
-       console.log('Domain-read SUBMIT request payload:', {
-         url: path,
-         body,
-       });
-     }
-    console.log('Access path:', path);
+
     const requestOptions: RequestInit = {
       method: 'POST',
       headers: {
@@ -288,26 +240,14 @@ const submitPreparedAccess = async (preparedAccess: PreparedAccess): Promise<boo
       body: JSON.stringify(body),
     };
 
-    logHttpRequest('PasswordManagerAccess.submitCredentials', path, requestOptions);
-    const submitRequestStart = Date.now();
     const response = await fetch(path, requestOptions);
-    await logHttpResponse('PasswordManagerAccess.submitCredentials', response);
-    console.log(`[Access timing] submit request round-trip: ${Date.now() - submitRequestStart} ms`);
-    logStep(startedAt, 'after submitCredentials response');
-
-    console.log('Access response status:', response.status, response.statusText);
 
     if (!response.ok) {
       console.error('Login failed:', response.status, response.statusText);
       return false;
     }
 
-    const result = await response.json();
-    console.log('Login successful:', result);
-    logStep(startedAt, 'flow completed');
-    if (typeof confirmedAt === 'number') {
-      console.log(`[Access timing] confirm to submit response: ${Date.now() - confirmedAt} ms`);
-    }
+    await response.json();
     return true;
   } catch (error) {
     console.error('SystemHubLogin error:', error);
@@ -331,7 +271,6 @@ export const clearPreparedAccess = (qrCacheKey?: string) => {
 
 // Function to handle domain login ~ access stored credentials for an domain
 export const Access = async (qrJson: i.Access)=> {
-  logPrepareCacheState(qrJson, 'confirm entry cache state');
   const preparedAccess = await getPreparedAccess(qrJson);
 
   if (!preparedAccess) {
@@ -345,9 +284,7 @@ async function getEncryptedCredentials(
   qrJson: i.Access,
   accessIdentity: AccessIdentity,
 ){
-  const startedAt = Date.now();
-  
-   const path = qrJson.type === 'domain-login'
+  const path = qrJson.type === 'domain-login'
   ? await getApiUrl('API_DECRYPTED_CREDENTIALS')
   : await getApiUrl('API_DECRYPTED_APPLICATIONS_CREDENTIALS');
    
@@ -369,9 +306,6 @@ async function getEncryptedCredentials(
       update: false,
     };
 
-    console.log('Access first request outgoing payload:', body);
-
-    // Make API request
     const requestOptions: RequestInit = {
       method: 'POST',
       headers: {
@@ -380,19 +314,8 @@ async function getEncryptedCredentials(
       body: JSON.stringify(body),
     };
 
-    if (path.includes('/api/credential-hub/domain/read/credential/decrypted')) {
-      console.log('Domain-read decrypted request payload:', {
-        url: path,
-        body,
-      });
-    }
-
-    logHttpRequest('PasswordManagerAccess.getEncryptedCredentials', path, requestOptions);
     const response = await fetch(path, requestOptions);
-    await logHttpResponse('PasswordManagerAccess.getEncryptedCredentials', response);
-    console.log(`[Access timing] getEncryptedCredentials fetch: ${Date.now() - startedAt} ms`);
 
-    // Check response status
     if (!response.ok) {
       console.error('Login failed:', response.status, response);
       return false;

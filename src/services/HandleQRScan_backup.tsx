@@ -42,11 +42,7 @@ export async function handleQRScan(data:string) {
   try {
     if(!data) return; 
     const qrInput: i.QRData = JSON.parse(data);
-    console.log('Parsed QR Input:', qrInput);
-
     const routeHandler = handleRoute[toCamelCase(qrInput.type)];
-
-    console.log("Route handler: " + routeHandler);
 
   //  if(routeHandler === 'clone'){      
   //    await handler.clone(qrInput as i.Clone);

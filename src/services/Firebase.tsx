@@ -19,7 +19,6 @@ export async function getFcmToken() {
       const newToken = await messaging().getToken();
       if (newToken) {
         await AsyncStorage.setItem('fcm_token', newToken);
-        console.log('FCM Token obtained and stored:', newToken);
         return newToken;
       }
     } catch (error) {
@@ -27,7 +26,6 @@ export async function getFcmToken() {
       return null;
     }
   }
-  console.log('Existing FCM Token found:', existingToken);
   return existingToken;
 }
 
@@ -54,7 +52,6 @@ export default function useFirebaseMessaging(
   
   // Create stable deactivateButtons function with useCallback
   const deactivateButtons = React.useCallback((options?: { preserveAccessCache?: boolean }) => {
-    console.log("Deactivating buttons until next notification");
     if (deactivateTimeoutRef.current) {
       clearTimeout(deactivateTimeoutRef.current);
       deactivateTimeoutRef.current = null;
@@ -86,7 +83,6 @@ export default function useFirebaseMessaging(
         const qrPayload = pendingQRData;
         const startedAt = Date.now();
         deactivateButtons({ preserveAccessCache: true });
-        console.log(`[Access timing] UI closed after confirm in ${Date.now() - startedAt} ms`);
         await handleQRScan(qrPayload);       
         // Clear pending data after processing
         setPendingQRData(null);
@@ -99,12 +95,6 @@ export default function useFirebaseMessaging(
   }, [pendingQRData, deactivateButtons]);
 
   const handleIncomingMessage = React.useCallback(async (remoteMessage: any) => {
-    console.log('FCM message received:', {
-      messageId: remoteMessage?.messageId,
-      hasData: Boolean(remoteMessage?.data),
-      hasNotification: Boolean(remoteMessage?.notification),
-    });
-
     const data = remoteMessage?.data ?? {};
     const action = data.action;
     const qrData = data.qrData ?? data.qr;
