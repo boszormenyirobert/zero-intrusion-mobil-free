@@ -3,6 +3,7 @@ import { View, StyleSheet, Pressable, Text } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import * as deviceStrore from '../DeviceStore';
 import entryStyles from '../../Entry.style';
+import { buildTypedQrPayload } from '../qrPayload';
 
 type SenderProps = {
   setView?: (view: string) => void;
@@ -19,8 +20,7 @@ const Sender: React.FC<SenderProps> = ({ setView }) => {
         return;
       }
 
-      const type ="clone";
-      setQrValue(JSON.stringify({ ...activeProfile, type }));
+      setQrValue(JSON.stringify(buildTypedQrPayload(activeProfile, 'clone')));
     };    
     fetchData();
   }, []);

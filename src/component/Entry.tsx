@@ -108,6 +108,10 @@ export function ScanCode({
   }
 
   const handleQRResult = async (data: string) => {
+    console.log('[QR][Entry] handleQRResult', {
+      valueLength: data?.length ?? 0,
+      preview: (data || '').slice(0, 80),
+    });
     setView('default');
 
     try {

@@ -2,6 +2,7 @@ import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {useEffect} from 'react';
 import { handleQRScan } from './HandleQRScan';
+import { normalizeAccessType } from './qrPayload';
 import { decryptFromBase64 } from './Encrypter';
 import { getCredentialSecret } from './DeviceStore';
 import {
@@ -39,6 +40,7 @@ export default function useFirebaseMessaging(
 ) {  
   // Store pending QR data
   const [pendingQRData, setPendingQRData] = React.useState<string | null>(null);
+  const pendingQRTypeRef = React.useRef<string | null>(null);
   const deactivateTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const showButtonsTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingAccessCacheKeyRef = React.useRef<string | null>(null);
@@ -65,6 +67,7 @@ export default function useFirebaseMessaging(
     }
     setMessageState(false);
     setPendingQRData(null);
+    pendingQRTypeRef.current = null;
     if (setAccessState) {
       setAccessState(false);
     }
@@ -81,11 +84,17 @@ export default function useFirebaseMessaging(
           markAccessConfirmed(pendingAccessCacheKeyRef.current, Date.now());
         }
         const qrPayload = pendingQRData;
+        const fallbackType = pendingQRTypeRef.current ?? undefined;
         const startedAt = Date.now();
         deactivateButtons({ preserveAccessCache: true });
-        await handleQRScan(qrPayload);       
+        if (fallbackType) {
+          await handleQRScan(qrPayload, fallbackType);
+        } else {
+          await handleQRScan(qrPayload);
+        }
         // Clear pending data after processing
         setPendingQRData(null);
+        pendingQRTypeRef.current = null;
       } catch (error) {
         console.error("Error in handleQRScan:", error);
         // Also deactivate on error
@@ -139,17 +148,23 @@ export default function useFirebaseMessaging(
 
     if (typeof qrData === 'string') {
       setPendingQRData(qrData);
+      pendingQRTypeRef.current = parsedQR
+        ? null
+        : (typeof data.type === 'string' ? data.type : null);
     } else if (qrData !== undefined && qrData !== null) {
       setPendingQRData(JSON.stringify(qrData));
+      pendingQRTypeRef.current = null;
     } else {
       setPendingQRData(null);
+      pendingQRTypeRef.current = null;
     }
 
     if (parsedQR?.qrCacheKey) {
       pendingAccessCacheKeyRef.current = parsedQR.qrCacheKey;
     }
 
-    if (parsedQR?.type === 'domain-login' || parsedQR?.type === 'applications') {
+    const normalizedType = normalizeAccessType(parsedQR?.type);
+    if (normalizedType === 'domain-login' || normalizedType === 'applications') {
       prepareAccess(parsedQR).catch(error => {
         console.error('Error preparing access on FCM arrival:', error);
       });

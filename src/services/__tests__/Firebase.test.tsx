@@ -47,6 +47,52 @@ describe('Firebase messaging service', () => {
     }
   });
 
+  it('passes vault-read fallback type for opaque qrData strings', async () => {
+    jest.useFakeTimers();
+
+    const setMessageState = jest.fn();
+    const setButtonsEnabled = jest.fn();
+    let hookValue: ReturnType<typeof useFirebaseMessaging>;
+
+    const Harness = () => {
+      hookValue = useFirebaseMessaging(setMessageState, undefined, setButtonsEnabled);
+      return null;
+    };
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+    await act(async () => {
+      renderer = ReactTestRenderer.create(<Harness />);
+      await flushPromises();
+    });
+
+    await act(async () => {
+      await messagingMock.__mock.triggerMessage({
+        data: {
+          action: 'show_allow_close',
+          type: 'vault-read',
+          qrData: 'opaque-cache-key',
+        },
+      });
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
+    await act(async () => {
+      await hookValue!.processQRData();
+    });
+
+    expect(handleQRScan).toHaveBeenCalledWith('opaque-cache-key', 'vault-read');
+
+    await act(async () => {
+      renderer!.unmount();
+    });
+
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
   it('returns cached FCM tokens when available', async () => {
     await AsyncStorage.setItem('fcm_token', 'cached-token');
 

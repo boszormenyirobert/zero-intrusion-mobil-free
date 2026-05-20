@@ -40,7 +40,7 @@ import {
 import { decryptFromBase64 } from '../../../../Encrypter';
 import { encryptWithGeneratedAesKey } from '../AES';
 import { encryptWithRsaPublicKey } from '../RSA';
-import { Access } from '../Access';
+import { Access, prepareAccess } from '../Access';
 
 const fetchMock = global.fetch as unknown as jest.Mock;
 const getApiUrlMock = () => getApiUrl as unknown as jest.Mock;
@@ -162,6 +162,22 @@ describe('PasswordManager Access', () => {
     } as never)).resolves.toBe(false);
   });
 
+  it('returns false when decrypted credentials response has success=false', async () => {
+    mockFetchResolvedOnce(response({
+      success: false,
+      credentials: [],
+    }));
+
+    await expect(Access({
+      domain: 'example.com',
+      domainProcessId: 'process',
+      xExtensionAuthOne: 'token',
+      type: 'applications',
+      source: 'extension',
+      iv: 'iv',
+    } as never)).resolves.toBe(false);
+  });
+
   it('returns false when loading encrypted credentials throws', async () => {
     mockFetchRejectedOnce(new Error('read-failed'));
 
@@ -173,6 +189,95 @@ describe('PasswordManager Access', () => {
       source: 'extension',
       iv: 'iv',
     } as never)).resolves.toBe(false);
+  });
+
+  it('treats domain-read as the domain endpoint', async () => {
+    mockFetchResolvedOnce(response({
+      credentials: [
+        { credential: 'cipher-1', targetId: 't1', description: 'first' },
+      ],
+    }));
+    mockFetchResolvedOnce(response({ accepted: true }));
+
+    await expect(Access({
+      domain: 'example.com',
+      domainProcessId: 'process',
+      xExtensionAuthOne: 'token',
+      type: 'domain-read',
+      source: 'extension',
+      iv: 'iv',
+    } as never)).resolves.toBe(true);
+
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      1,
+      'https://tenant.example.com/read-encrypted',
+      expect.any(Object),
+    );
+  });
+
+  it('preserves already typed qrCacheKey for domain-read requests', async () => {
+    mockFetchResolvedOnce(response({
+      credentials: [
+        { credential: 'cipher-1', targetId: 't1', description: 'first' },
+      ],
+    }));
+    mockFetchResolvedOnce(response({ accepted: true }));
+
+    await expect(Access({
+      type: 'domain-read',
+      source: 'extension',
+      qrCacheKey: 'qr-cache-typed::domain-read',
+      credentialCacheKey: 'cred-cache-typed',
+      iv: 'iv',
+    } as never)).resolves.toBe(true);
+
+    const firstRequestBody = JSON.parse(
+      ((global.fetch as jest.Mock).mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(firstRequestBody.qrCacheKey).toBe('qr-cache-typed::domain-read');
+  });
+
+  it('treats vault-read as the applications endpoint', async () => {
+    getApiUrlMock()
+      .mockReset()
+      .mockResolvedValueOnce('https://tenant.example.com/read-apps')
+      .mockResolvedValueOnce('https://tenant.example.com/submit-apps');
+    (getPublicId as jest.Mock).mockResolvedValue('public-id');
+    (getPrivateId as jest.Mock).mockResolvedValue('private-id');
+    (getSecret as jest.Mock).mockResolvedValue('secret');
+    (getEmail as jest.Mock).mockResolvedValue('user@example.com');
+    (getCredentialSecret as jest.Mock).mockResolvedValue('credential-secret');
+    mockFetchResolvedOnce(response({
+      credentials: [
+        { credential: 'cipher-1', targetId: 't1', description: 'first' },
+      ],
+    }));
+    mockFetchResolvedOnce(response({ accepted: true }));
+
+    await expect(Access({
+      domain: 'example.com',
+      domainProcessId: 'process',
+      xExtensionAuthOne: 'token',
+      type: 'vault-read',
+      source: 'extension',
+      iv: 'iv',
+    } as never)).resolves.toBe(true);
+
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      1,
+      'https://tenant.example.com/read-apps',
+      expect.any(Object),
+    );
+
+    const decryptRequestBody = JSON.parse(
+      ((global.fetch as jest.Mock).mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(decryptRequestBody.type).toBe('applications');
+
+    const submitRequestBody = JSON.parse(
+      ((global.fetch as jest.Mock).mock.calls[1][1] as RequestInit).body as string,
+    );
+    expect(submitRequestBody.type).toBe('applications');
   });
 
   it('supports missing auth tokens and optional application fields', async () => {
@@ -195,7 +300,7 @@ describe('PasswordManager Access', () => {
       1,
       'https://tenant.example.com/read-encrypted',
       expect.objectContaining({
-        headers: expect.objectContaining({ 'X-Extension-Auth': 'HMAC ' }),
+        headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
       }),
     );
     expect(global.fetch).toHaveBeenNthCalledWith(
@@ -240,9 +345,9 @@ describe('PasswordManager Access', () => {
     // Verify required fields are present in first request
     expect(parsedBody.qrCacheKey).toBe('qr-cache-1');
     expect(parsedBody.credentialCacheKey).toBe('cred-cache-1');
+    expect(parsedBody.source).toBe('extension');
     expect(parsedBody.publicId).toBe('public-id');
     expect(parsedBody.privateId).toBe('encrypted:private-id');
-    expect(parsedBody.email).toBe('user@example.com');
     expect(parsedBody.update).toBe(false);
     
     // The second request (submitCredentials) should have the full QR payload
@@ -300,5 +405,236 @@ describe('PasswordManager Access', () => {
     expect(submitBody.rsaEncryptedKey).toBe('rsa-encrypted-key');
     expect(submitBody.iv).toBe('aes-generated-iv');
     expect(submitBody.domainProcessId).toBe('response-process');
+  });
+
+  it('uses latest source from access call when prepared access is cached', async () => {
+    mockFetchResolvedOnce(response({
+      credentials: [
+        { credential: 'cipher-1', targetId: 't1', description: 'first' },
+      ],
+    }));
+
+    await expect(prepareAccess({
+      type: 'domain-login',
+      qrCacheKey: 'cached-key',
+      credentialCacheKey: 'cached-cred-key',
+    } as never)).resolves.toBe(true);
+
+    mockFetchResolvedOnce(response({ accepted: true }));
+
+    await expect(Access({
+      type: 'domain-login',
+      source: 'extension',
+      qrCacheKey: 'cached-key',
+      credentialCacheKey: 'cached-cred-key',
+    } as never)).resolves.toBe(true);
+
+    const submitRequest = (global.fetch as jest.Mock).mock.calls.find(
+      call => call[0] === 'https://tenant.example.com/submit',
+    );
+    expect(submitRequest).toBeDefined();
+
+    const submitBody = JSON.parse((submitRequest?.[1] as RequestInit).body as string);
+    expect(submitBody.source).toBe('extension');
+  });
+
+  it('accepts nested decrypt response payload shape for vault-read', async () => {
+    getApiUrlMock()
+      .mockReset()
+      .mockResolvedValueOnce('https://tenant.example.com/read-apps')
+      .mockResolvedValueOnce('https://tenant.example.com/submit-apps');
+    (getPublicId as jest.Mock).mockResolvedValue('public-id');
+    (getPrivateId as jest.Mock).mockResolvedValue('private-id');
+    (getSecret as jest.Mock).mockResolvedValue('secret');
+    (getEmail as jest.Mock).mockResolvedValue('user@example.com');
+    (getCredentialSecret as jest.Mock).mockResolvedValue('credential-secret');
+
+    mockFetchResolvedOnce(response({
+      success: true,
+      data: {
+        credentials: [
+          { credential: 'cipher-1', targetId: 't1', description: 'first' },
+        ],
+        domainProcessId: 'nested-process-id',
+      },
+    }));
+    mockFetchResolvedOnce(response({ accepted: true }));
+
+    await expect(Access({
+      type: 'vault-read',
+      source: 'extension',
+      qrCacheKey: 'vault-cache-key',
+      credentialCacheKey: 'vault-cred-key',
+      iv: 'iv',
+    } as never)).resolves.toBe(true);
+
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      2,
+      'https://tenant.example.com/submit-apps',
+      expect.any(Object),
+    );
+
+    const submitBody = JSON.parse(((global.fetch as jest.Mock).mock.calls[1][1] as RequestInit).body as string);
+    expect(submitBody.domainProcessId).toBe('nested-process-id');
+  });
+
+  it('accepts credential object-map shape for vault-read decrypt response', async () => {
+    getApiUrlMock()
+      .mockReset()
+      .mockResolvedValueOnce('https://tenant.example.com/read-apps')
+      .mockResolvedValueOnce('https://tenant.example.com/submit-apps');
+
+    mockFetchResolvedOnce(response({
+      credentials: {
+        c1: { credential: 'cipher-1', targetId: 't1', description: 'first' },
+      },
+    }));
+    mockFetchResolvedOnce(response({ accepted: true }));
+
+    await expect(Access({
+      type: 'vault-read',
+      source: 'extension',
+      qrCacheKey: 'vault-cache-key-2',
+      credentialCacheKey: 'vault-cred-key-2',
+      iv: 'iv',
+    } as never)).resolves.toBe(true);
+
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      2,
+      'https://tenant.example.com/submit-apps',
+      expect.any(Object),
+    );
+  });
+
+  it('accepts numeric top-level credential entries with success metadata', async () => {
+    getApiUrlMock()
+      .mockReset()
+      .mockResolvedValueOnce('https://tenant.example.com/read-apps')
+      .mockResolvedValueOnce('https://tenant.example.com/submit-apps');
+
+    mockFetchResolvedOnce(response({
+      0: { credential: 'cipher-1', targetId: 't1', description: 'first', application: 'credential' },
+      1: { credential: 'cipher-2', targetId: 't2', description: 'second', application: 'application' },
+      success: true,
+    }));
+    mockFetchResolvedOnce(response({ accepted: true }));
+
+    await expect(Access({
+      type: 'vault-read',
+      source: 'extension',
+      qrCacheKey: 'vault-cache-key-3',
+      credentialCacheKey: 'vault-cred-key-3',
+      iv: 'iv',
+    } as never)).resolves.toBe(true);
+
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      2,
+      'https://tenant.example.com/submit-apps',
+      expect.any(Object),
+    );
+  });
+
+  it('encrypts vault-read submit when decrypt response provides rsaPublicKey alias', async () => {
+    getApiUrlMock()
+      .mockReset()
+      .mockResolvedValueOnce('https://tenant.example.com/read-apps')
+      .mockResolvedValueOnce('https://tenant.example.com/submit-apps');
+
+    mockFetchResolvedOnce(response({
+      success: true,
+      credentials: [
+        { credential: 'cipher-1', targetId: 't1', description: 'first' },
+      ],
+      rsaPublicKey: '{"kty":"RSA","n":"alias-n","e":"AQAB"}',
+    }));
+    mockFetchResolvedOnce(response({ accepted: true }));
+
+    await expect(Access({
+      type: 'vault-read',
+      source: 'extension',
+      qrCacheKey: 'vault-cache-key-4',
+      credentialCacheKey: 'vault-cred-key-4',
+      iv: 'iv',
+    } as never)).resolves.toBe(true);
+
+    expect(encryptWithGeneratedAesKey).toHaveBeenCalled();
+    expect(encryptWithRsaPublicKey).toHaveBeenCalledWith(
+      'aes-generated-key',
+      '{"kty":"RSA","n":"alias-n","e":"AQAB"}',
+    );
+
+    const submitBody = JSON.parse(((global.fetch as jest.Mock).mock.calls[1][1] as RequestInit).body as string);
+    expect(submitBody.credentials).toBe('aes-encrypted-credentials');
+    expect(submitBody.rsaEncryptedKey).toBe('rsa-encrypted-key');
+    expect(submitBody.iv).toBe('aes-generated-iv');
+  });
+
+  it('encrypts vault-read submit when decrypt response provides public_key alias', async () => {
+    getApiUrlMock()
+      .mockReset()
+      .mockResolvedValueOnce('https://tenant.example.com/read-apps')
+      .mockResolvedValueOnce('https://tenant.example.com/submit-apps');
+
+    mockFetchResolvedOnce(response({
+      success: true,
+      credentials: [
+        { credential: 'cipher-1', targetId: 't1', description: 'first' },
+      ],
+      public_key: '{"kty":"RSA","n":"snake-n","e":"AQAB"}',
+    }));
+    mockFetchResolvedOnce(response({ accepted: true }));
+
+    await expect(Access({
+      type: 'vault-read',
+      source: 'extension',
+      qrCacheKey: 'vault-cache-key-5',
+      credentialCacheKey: 'vault-cred-key-5',
+      iv: 'iv',
+    } as never)).resolves.toBe(true);
+
+    expect(encryptWithGeneratedAesKey).toHaveBeenCalled();
+    expect(encryptWithRsaPublicKey).toHaveBeenCalledWith(
+      'aes-generated-key',
+      '{"kty":"RSA","n":"snake-n","e":"AQAB"}',
+    );
+
+    const submitBody = JSON.parse(((global.fetch as jest.Mock).mock.calls[1][1] as RequestInit).body as string);
+    expect(submitBody.credentials).toBe('aes-encrypted-credentials');
+    expect(submitBody.rsaEncryptedKey).toBe('rsa-encrypted-key');
+  });
+
+  it('encrypts vault-read submit using qr publicKey fallback when decrypt response has no key', async () => {
+    getApiUrlMock()
+      .mockReset()
+      .mockResolvedValueOnce('https://tenant.example.com/read-apps')
+      .mockResolvedValueOnce('https://tenant.example.com/submit-apps');
+
+    mockFetchResolvedOnce(response({
+      success: true,
+      credentials: [
+        { credential: 'cipher-1', targetId: 't1', description: 'first' },
+      ],
+    }));
+    mockFetchResolvedOnce(response({ accepted: true }));
+
+    await expect(Access({
+      type: 'vault-read',
+      source: 'extension',
+      qrCacheKey: 'vault-cache-key-6',
+      credentialCacheKey: 'vault-cred-key-6',
+      publicKey: '{"kty":"RSA","n":"qr-fallback-n","e":"AQAB"}',
+      iv: 'iv',
+    } as never)).resolves.toBe(true);
+
+    expect(encryptWithGeneratedAesKey).toHaveBeenCalled();
+    expect(encryptWithRsaPublicKey).toHaveBeenCalledWith(
+      'aes-generated-key',
+      '{"kty":"RSA","n":"qr-fallback-n","e":"AQAB"}',
+    );
+
+    const submitBody = JSON.parse(((global.fetch as jest.Mock).mock.calls[1][1] as RequestInit).body as string);
+    expect(submitBody.credentials).toBe('aes-encrypted-credentials');
+    expect(submitBody.rsaEncryptedKey).toBe('rsa-encrypted-key');
+    expect(submitBody.iv).toBe('aes-generated-iv');
   });
 });

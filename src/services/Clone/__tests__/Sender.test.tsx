@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text } from 'react-native';
 import ReactTestRenderer, { act } from 'react-test-renderer';
+import QRCode from 'react-native-qrcode-svg';
 
 jest.mock('../../DeviceStore', () => ({
   getActiveProfile: jest.fn(),
@@ -33,7 +34,7 @@ describe('Clone Sender', () => {
       await flushPromises();
     });
 
-    expect(renderer!.root.findByProps({ testID: 'qr-code' }).props.children).toContain('"type":"clone"');
+    expect(renderer!.root.findByType(QRCode).props.value).toContain('"type":"clone"');
   });
 
   it('supports navigating back and tolerates a missing profile', async () => {

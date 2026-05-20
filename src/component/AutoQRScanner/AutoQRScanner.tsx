@@ -76,12 +76,17 @@ export default function AutoQRScanner({
   }, [scaleAnim]);
 
   const processScannedCode = async (value: string) => {
+    console.log('[QR][AutoQRScanner] processScannedCode:start', {
+      valueLength: value?.length ?? 0,
+      preview: (value || '').slice(0, 80),
+    });
     scanLockRef.current = true;
     setScannedIfMounted(isMountedRef, setScanned, true);
 
     try {
       await onResult(value);
     } finally {
+      console.log('[QR][AutoQRScanner] processScannedCode:done');
       scanLockRef.current = false;
       setScannedIfMounted(isMountedRef, setScanned, false);
     }
@@ -90,6 +95,10 @@ export default function AutoQRScanner({
   const codeScanner = useCodeScanner({
     codeTypes: ['qr'],
     onCodeScanned: codes => {
+      console.log('[QR][AutoQRScanner] onCodeScanned', {
+        codesCount: codes.length,
+        hasValue: Boolean(codes[0]?.value),
+      });
       if (scanLockRef.current || codes.length === 0) {
         return;
       }
