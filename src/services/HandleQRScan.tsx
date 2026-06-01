@@ -142,6 +142,7 @@ export async function handleQRScan(data:string, fallbackType?: string) {
     fallbackType: fallbackType || null,
     valueLength: data?.length ?? 0,
   });
+  console.log('[Notification][HandleQRScan] incoming', data);
   const handler = new RequestHandler();
 
   // System Hub operations

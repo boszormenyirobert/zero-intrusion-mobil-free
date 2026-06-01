@@ -33,7 +33,7 @@ type EncryptedCredentialsResponse = {
     description?: string;
     application?: string;
   }>;
-  domainProcessId?: string;
+  sessionId?: string;
   publicKey?: string | Record<string, unknown>;
   rsaPublicKey?: string | Record<string, unknown>;
   encryptionPublicKey?: string | Record<string, unknown>;
@@ -50,7 +50,7 @@ type PreparedAccess = {
     application?: string;
   }>;
   encryptedPayload: EncryptedPayload | null;
-  domainProcessId?: string;
+  sessionId?: string;
   publicKey?: string;
   processId?: string;
 };
@@ -212,8 +212,8 @@ const normalizeEncryptedCredentialsResponse = (
     ?? toCredentialArray(nestedResponse?.credentials)
     ?? toCredentialArray(response);
 
-  const resolvedDomainProcessId = parsedResponse.domainProcessId
-    ?? nestedResponse?.domainProcessId;
+  const resolvedDomainProcessId = parsedResponse.sessionId
+    ?? nestedResponse?.sessionId;
 
   const pickPublicKeyFromRecord = (record: Record<string, unknown>) => {
     const directPublicKey =
@@ -301,10 +301,10 @@ const normalizeEncryptedCredentialsResponse = (
   return {
     success: successFlag,
     credentials: resolvedCredentials,
-    domainProcessId: resolvedDomainProcessId,
-    publicKey: resolvedPublicKey,
-    rsaPublicKey: parsedResponse.rsaPublicKey ?? nestedResponse?.rsaPublicKey,
-    encryptionPublicKey: parsedResponse.encryptionPublicKey ?? nestedResponse?.encryptionPublicKey,
+    sessionId: resolvedDomainProcessId,
+ //   publicKey: resolvedPublicKey,
+ //   rsaPublicKey: parsedResponse.rsaPublicKey ?? nestedResponse?.rsaPublicKey,
+ //   encryptionPublicKey: parsedResponse.encryptionPublicKey ?? nestedResponse?.encryptionPublicKey,
   };
 };
 
@@ -339,15 +339,18 @@ const buildPreparedAccess = async (qrJson: i.Access): Promise<PreparedAccess | f
     ? { credentials: aesResult.encryptedData, rsaEncryptedKey, iv: aesResult.iv }
     : null;
 
-  const domainProcessId = encryptedCredentials.domainProcessId || qrJson.domainProcessId;
-  const processId = encryptedCredentialsResponse.processId ;
+  const sessionId = qrJson.sessionId;
+    console.log('Prepared Access Data qrJson', qrJson)
+    console.log('Prepared Access Data encryptedCredentialsResponse', encryptedCredentials)
+
+  const processId = encryptedCredentialsResponse.sessionId ;
   return {
     qrJson,
     accessIdentity,
     decryptedCredentials,
     encryptedPayload,
-    domainProcessId,
-     processId,
+    sessionId,
+    processId,
     publicKey: resolvedPublicKey,
   };
 };
@@ -383,7 +386,7 @@ const getPreparedAccess = async (qrJson: i.Access): Promise<PreparedAccess | fal
 };
 
 const submitPreparedAccess = async (preparedAccess: PreparedAccess): Promise<boolean> => {
-  const { qrJson, accessIdentity, decryptedCredentials, encryptedPayload, domainProcessId } = preparedAccess;
+  const { qrJson, accessIdentity, decryptedCredentials, encryptedPayload, sessionId } = preparedAccess;
   consumeAccessConfirmation(getAccessCacheKey(qrJson));
   const accessType = normalizeAccessType(qrJson.type);
   const path = accessType === 'domain-login'
@@ -403,7 +406,7 @@ const submitPreparedAccess = async (preparedAccess: PreparedAccess): Promise<boo
       credentials: encryptedPayload?.credentials ?? decryptedCredentials,
       rsaEncryptedKey: encryptedPayload?.rsaEncryptedKey,
       iv: encryptedPayload?.iv ?? loginData.iv,
-      domainProcessId: domainProcessId ?? loginData.domainProcessId,      
+      sessionId: sessionId ?? loginData.sessionId,      
       processId:preparedAccess.processId,
     };
 
@@ -464,6 +467,7 @@ export const Access = async (qrJson: i.Access)=> {
     qrJson: {
       ...preparedAccess.qrJson,
       ...qrJson,
+      sessionId: qrJson.sessionId ?? preparedAccess.qrJson?.sessionId,
       source: qrJson.source ?? preparedAccess.qrJson.source,
     },
   };

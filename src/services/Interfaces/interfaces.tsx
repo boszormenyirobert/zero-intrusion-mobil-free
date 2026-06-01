@@ -58,7 +58,7 @@ export interface HubRegistrationExtended
 
 export interface HubLogin {
   domain: string;
-  domainProcessId: string;
+  sessionId: string;
   xExtensionAuthOne: string;
   type: 'system_hub_login';
   corporateId: string;
@@ -100,7 +100,7 @@ export interface RequestCredentialsToEncrypt {
 
 export interface Access {
   domain?: string;
-  domainProcessId?: string;
+  sessionId?: string;
   xExtensionAuthOne?: string;
   type?: 'domain-login';
   source?: string;
@@ -133,7 +133,7 @@ export interface AccessCredentialsRequest {
   credentialCacheKey?: string;
   
   // QR payload fields - to be tested individually
-  domainProcessId?: string;
+  sessionId?: string;
   xExtensionAuthOne?: string;
   type?: string;
   source?: string;
@@ -200,7 +200,7 @@ export type UserRegistrationProps = {
 // Define return types for each incoming type
 export interface RegistrationResponse {
   domain: string;
-  domainProcessId: string;
+  sessionId: string;
   xExtensionAuthOne: string;
 }
 

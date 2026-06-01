@@ -86,6 +86,7 @@ export const SystemHubLogin = async (qrJson: i.HubLogin): Promise<boolean> => {
       email: await getEmail()        
     };
 
+    console.log('Login request body:', qrJson); // Debug log to check the request body
     // Make API request
     const requestOptions: RequestInit = {
       method: 'POST',
