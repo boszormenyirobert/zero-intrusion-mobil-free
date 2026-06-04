@@ -4,6 +4,8 @@ import * as i from './Interfaces/interfaces';
 
 const PROFILES_SERVICE = 'profiles';
 const ACTIVE_PROFILE_SERVICE = 'activeProfile';
+const RSA_PRIVATE_KEY_SERVICE = 'rsaPrivateKey';
+const RSA_PUBLIC_KEY_SERVICE = 'rsaPublicKey';
 
 const readKeychainValue = async (service: string): Promise<string | null> => {
   try {
@@ -187,6 +189,17 @@ const getPrivacyPolicy = async (): Promise<boolean> => {
   return Boolean(activeProfile?.privacyPolicy);
 };
 
+const getRsaPrivateKey = async (): Promise<string | null> => readKeychainValue(RSA_PRIVATE_KEY_SERVICE);
+
+const getRsaPublicKey = async (): Promise<string | null> => readKeychainValue(RSA_PUBLIC_KEY_SERVICE);
+
+const setRsaKeyPair = async (privateKeyPem: string, publicKey: string) => {
+  await Promise.all([
+    writeKeychainValue(RSA_PRIVATE_KEY_SERVICE, privateKeyPem),
+    writeKeychainValue(RSA_PUBLIC_KEY_SERVICE, publicKey),
+  ]);
+};
+
 export {
   getActiveProfile,
   getApiUrl,
@@ -197,9 +210,12 @@ export {
   getPrivateId,
   getProfiles,
   getPublicId,
+  getRsaPrivateKey,
+  getRsaPublicKey,
   getSecret,
   normalizeApiBaseUrl,
   saveProfile,
+  setRsaKeyPair,
   setActiveProfile,
   setActiveProfileByEmail,
 };

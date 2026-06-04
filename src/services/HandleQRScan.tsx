@@ -67,6 +67,25 @@ const normalizeWrappedAccessPayload = (
   } as ParsedQRInput;
 };
 
+const normalizeQrContentPayload = (
+  parsed: Record<string, unknown>,
+  fallbackType?: string,
+): ParsedQRInput | null => {
+  const qrContentRaw = parsed.qrContent;
+  if (!qrContentRaw || typeof qrContentRaw !== 'object') {
+    return null;
+  }
+
+  const qrContent = qrContentRaw as Record<string, unknown>;
+  const normalizedType = pickType([qrContent.type, parsed.type], fallbackType);
+
+  return {
+    ...parsed,
+    ...qrContent,
+    type: normalizedType,
+  } as ParsedQRInput;
+};
+
 function parseQRInput(data: string, fallbackType?: string): ParsedQRInput | null {
   const trimmedData = data.trim();
   console.log('[QR][HandleQRScan] parseQRInput:start', {
@@ -108,6 +127,11 @@ function parseQRInput(data: string, fallbackType?: string): ParsedQRInput | null
 
     if (parsed && typeof parsed === 'object') {
       const parsedObject = parsed as Record<string, unknown>;
+      const normalizedQrContent = normalizeQrContentPayload(parsedObject, fallbackType);
+      if (normalizedQrContent) {
+        return normalizedQrContent;
+      }
+
       const sourceValue = shouldDefaultAccessSource(parsedObject.type, fallbackType)
         ? (parsedObject.source as string | undefined) ?? 'extension'
         : (parsedObject.source as string | undefined);
@@ -172,12 +196,18 @@ export async function handleQRScan(data:string, fallbackType?: string) {
     clone: handler.clone
   }
 
+  const newUserCredentialRoutes = {
+    newUserCredential: handler.newUserCredential,
+    newUserCredentialSilent: handler.newUserCredential,
+  };
+
   // Merge all route groups into handleRoute
   const handleRoute = {
     ...systemHubRoutes,
     ...domainRoutes,
     ...applicationRoutes,
-    ...cloneRoutes
+    ...cloneRoutes,
+    ...newUserCredentialRoutes,
   };
 
   try {

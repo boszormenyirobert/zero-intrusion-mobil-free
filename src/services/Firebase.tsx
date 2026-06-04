@@ -5,12 +5,111 @@ import { handleQRScan } from './HandleQRScan';
 import { normalizeAccessType } from './qrPayload';
 import { decryptFromBase64 } from './Encrypter';
 import { getCredentialSecret } from './DeviceStore';
+import { decryptSilentNewUserCredentialPayload } from './HTTP/PasswordManager/Shared/SilentCredentialDecrypt';
+import { saveSilentCredential } from './HTTP/PasswordManager/Shared/SaveSilentCredential';
 import {
   clearAccessConfirmation,
   clearPreparedAccess,
   markAccessConfirmed,
   prepareAccess,
 } from './HTTP/PasswordManager/Shared/Access';
+
+const SILENT_NEW_USER_CREDENTIAL_TYPE = 'new-user-credential-silent';
+
+const parsePotentialJson = (value: unknown) => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+};
+
+const hasSilentCredentialType = (payload: unknown): boolean => {
+  if (!payload || typeof payload !== 'object') {
+    return false;
+  }
+
+  const payloadRecord = payload as Record<string, unknown>;
+  if (payloadRecord.type === SILENT_NEW_USER_CREDENTIAL_TYPE) {
+    return true;
+  }
+
+  return hasSilentCredentialType(payloadRecord.qrContent);
+};
+
+const getParsedQrPayload = (data: Record<string, unknown>) => {
+  const rawPayload = data.qrData ?? data.qr ?? data.qrContent;
+  const parsedPayload = parsePotentialJson(rawPayload);
+
+  if (parsedPayload && typeof parsedPayload === 'object') {
+    return {
+      rawPayload,
+      parsedPayload,
+    };
+  }
+
+  return {
+    rawPayload,
+    parsedPayload: null,
+  };
+};
+
+export const handleSilentCredentialRemoteMessage = async (remoteMessage: any) => {
+  const data = (remoteMessage?.data ?? {}) as Record<string, unknown>;
+  const { parsedPayload } = getParsedQrPayload(data);
+  const silentPayload = parsedPayload ?? parsePotentialJson(data.qrContent) ?? data;
+
+  if (!hasSilentCredentialType(silentPayload) && data.type !== SILENT_NEW_USER_CREDENTIAL_TYPE) {
+    return false;
+  }
+
+  // Extract sessionId from the payload — look in qrContent first, then top level
+  const qrContent =
+    silentPayload && typeof silentPayload === 'object'
+      ? (silentPayload as Record<string, unknown>).qrContent
+      : null;
+  const qrContentRecord =
+    qrContent && typeof qrContent === 'object' ? (qrContent as Record<string, unknown>) : null;
+  const sessionId =
+    (qrContentRecord?.sessionId as string | undefined) ??
+    ((silentPayload as Record<string, unknown>)?.sessionId as string | undefined) ??
+    null;
+
+  console.log('[SilentCredential] sessionId resolved from payload', { sessionId });
+
+  try {
+    const decryptedPayload = await decryptSilentNewUserCredentialPayload(silentPayload);
+    if (decryptedPayload === null) {
+      console.error(
+        '[SilentCredential] Decryption returned null. Missing iv or unsupported encryptedData format.',
+      );
+      return true;
+    }
+
+    console.log('[SilentCredential] Decrypted payload', decryptedPayload);
+
+    if (!sessionId) {
+      console.error('[SilentCredential] Missing sessionId — cannot save credential');
+      return true;
+    }
+
+    await saveSilentCredential(decryptedPayload, silentPayload, sessionId);
+  } catch (error) {
+    console.error('Error decrypting new-user-credential-silent payload:', error);
+  }
+
+  return true;
+};
+
+export const registerFirebaseBackgroundHandler = () => {
+  messaging().setBackgroundMessageHandler(async remoteMessage => {
+    await handleSilentCredentialRemoteMessage(remoteMessage);
+  });
+};
 
 // Function to get or request FCM token
 export async function getFcmToken() {
@@ -106,17 +205,10 @@ export default function useFirebaseMessaging(
   const handleIncomingMessage = React.useCallback(async (remoteMessage: any) => {
     const data = remoteMessage?.data ?? {};
     const action = data.action;
-    const qrData = data.qrData ?? data.qr;
+    const { rawPayload: qrData, parsedPayload: parsedQR } = getParsedQrPayload(data);
 
-    let parsedQR: any = null;
-    if (typeof qrData === 'string') {
-      try {
-        parsedQR = JSON.parse(qrData);
-      } catch {
-        parsedQR = null;
-      }
-    } else if (qrData && typeof qrData === 'object') {
-      parsedQR = qrData;
+    if (await handleSilentCredentialRemoteMessage(remoteMessage)) {
+      return;
     }
 
     if (parsedQR?.type === 'user-credential-decryption') {

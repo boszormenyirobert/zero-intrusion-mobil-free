@@ -154,6 +154,19 @@ export class StrongBiometricService {
       return false;
     }
   }
+
+  /**
+   * Create hardware-backed biometric key pair and return the public key.
+   */
+  static async createKeysAndGetPublicKey(): Promise<string | null> {
+    try {
+      const { publicKey } = await this.rnBiometrics.createKeys();
+      return publicKey || null;
+    } catch (error) {
+      console.error('❌ Error creating biometric keys:', error);
+      return null;
+    }
+  }
 }
 
 export default StrongBiometricService;

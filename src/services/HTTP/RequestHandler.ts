@@ -3,6 +3,7 @@ import {SystemHubRegistration, SystemHubLogin, SystemHubSecureDevice} from './Sy
 import {Registration as SharedRegistration} from './PasswordManager/Shared/Registration';
 import {Access} from './PasswordManager/Shared/Access';
 import {Delete as DomainDelete} from './PasswordManager/Shared/Delete';
+import { NewUserCredential as NewUserCredentialRegistration } from './PasswordManager/Shared/NewUserCredential';
 import { registerDeviceAndUserByClone } from './registerDevice';
 
 export class RequestHandler {
@@ -35,6 +36,10 @@ export class RequestHandler {
   async clone(data: i.Clone): Promise<boolean> {
     return await registerDeviceAndUserByClone(data);    
   } 
+
+  async newUserCredential(data: i.NewUserCredential): Promise<boolean> {
+    return await NewUserCredentialRegistration(data);
+  }
 
   // Map for secure device  (async API call)
   async systemHubSecureDevice(data: i.SecureDevice): Promise<boolean> {

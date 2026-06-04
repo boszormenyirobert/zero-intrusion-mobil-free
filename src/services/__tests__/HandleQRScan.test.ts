@@ -6,6 +6,7 @@ const mockHandler = {
   access: jest.fn(),
   delete: jest.fn(),
   clone: jest.fn(),
+  newUserCredential: jest.fn(),
 };
 
 jest.mock('../HTTP/RequestHandler', () => ({
@@ -34,6 +35,56 @@ describe('handleQRScan', () => {
 
     expect(mockHandler.systemHubRegistration).toHaveBeenCalledWith({ type: 'system_hub_registration' });
     expect(mockHandler.clone).toHaveBeenCalledWith({ type: 'clone' });
+  });
+
+  it('unwraps qrContent and dispatches new-user-credential route', async () => {
+    mockHandler.newUserCredential.mockResolvedValueOnce(true);
+
+    const wrappedPayload = {
+      userPublicId: 'user_123',
+      qrContent: {
+        type: 'new-user-credential',
+        source: 'extension',
+        sessionId: 'sess_abc123',
+      },
+    };
+
+    await expect(handleQRScan(JSON.stringify(wrappedPayload))).resolves.toEqual({
+      type: 'new-user-credential',
+      result: true,
+    });
+
+    expect(mockHandler.newUserCredential).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'new-user-credential',
+        sessionId: 'sess_abc123',
+        userPublicId: 'user_123',
+      }),
+    );
+  });
+
+  it('dispatches new-user-credential-silent route to the same handler', async () => {
+    mockHandler.newUserCredential.mockResolvedValueOnce(true);
+
+    await expect(
+      handleQRScan(
+        JSON.stringify({
+          type: 'new-user-credential-silent',
+          source: 'extension',
+          sessionId: 'sess_silent_1',
+        }),
+      ),
+    ).resolves.toEqual({
+      type: 'new-user-credential-silent',
+      result: true,
+    });
+
+    expect(mockHandler.newUserCredential).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'new-user-credential-silent',
+        sessionId: 'sess_silent_1',
+      }),
+    );
   });
 
   it('dispatches domain-read and vault-read access routes', async () => {

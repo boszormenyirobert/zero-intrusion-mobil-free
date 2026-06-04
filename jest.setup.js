@@ -78,12 +78,16 @@ jest.mock('@react-native-firebase/messaging', () => {
     unsubscribe: jest.fn(),
     unsubscribeOpened: jest.fn(),
     handler: null,
+    backgroundHandler: null,
     openedHandler: null,
     initialNotification: null,
   };
 
   const messaging = jest.fn(() => ({
     getToken: state.getToken,
+    setBackgroundMessageHandler: jest.fn(callback => {
+      state.backgroundHandler = callback;
+    }),
     onMessage: jest.fn(callback => {
       state.handler = callback;
       return state.unsubscribe;
@@ -95,11 +99,20 @@ jest.mock('@react-native-firebase/messaging', () => {
     getInitialNotification: jest.fn(async () => state.initialNotification),
   }));
 
+  messaging.setBackgroundMessageHandler = jest.fn(callback => {
+    state.backgroundHandler = callback;
+  });
+
   messaging.__mock = {
     state,
     triggerMessage: async remoteMessage => {
       if (state.handler) {
         await state.handler(remoteMessage);
+      }
+    },
+    triggerBackgroundMessage: async remoteMessage => {
+      if (state.backgroundHandler) {
+        await state.backgroundHandler(remoteMessage);
       }
     },
     triggerNotificationOpened: async remoteMessage => {
@@ -115,6 +128,7 @@ jest.mock('@react-native-firebase/messaging', () => {
       state.unsubscribe.mockReset();
       state.unsubscribeOpened.mockReset();
       state.handler = null;
+      state.backgroundHandler = null;
       state.openedHandler = null;
       state.initialNotification = null;
     },

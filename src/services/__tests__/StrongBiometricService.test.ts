@@ -112,6 +112,16 @@ describe('StrongBiometricService', () => {
     await expect(StrongBiometricService.createKeys()).resolves.toBe(false);
   });
 
+  it('returns generated public key when requested', async () => {
+    biometricsMock.__mockInstance.createKeys.mockResolvedValueOnce({ publicKey: 'public-key-value' });
+    biometricsMock.__mockInstance.createKeys.mockResolvedValueOnce({ publicKey: '' });
+    biometricsMock.__mockInstance.createKeys.mockRejectedValueOnce(new Error('fail'));
+
+    await expect(StrongBiometricService.createKeysAndGetPublicKey()).resolves.toBe('public-key-value');
+    await expect(StrongBiometricService.createKeysAndGetPublicKey()).resolves.toBeNull();
+    await expect(StrongBiometricService.createKeysAndGetPublicKey()).resolves.toBeNull();
+  });
+
   it('reports capability flags for face id sensors', async () => {
     biometricsMock.__mockInstance.isSensorAvailable
       .mockResolvedValueOnce({ available: true, biometryType: biometricsModule.BiometryTypes.FaceID })

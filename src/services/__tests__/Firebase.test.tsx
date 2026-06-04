@@ -22,18 +22,28 @@ jest.mock('../DeviceStore', () => ({
   getCredentialSecret: jest.fn(async () => 'credential-secret'),
 }));
 
-import useFirebaseMessaging, { getFcmToken } from '../Firebase';
+jest.mock('../HTTP/PasswordManager/Shared/SilentCredentialDecrypt', () => ({
+  decryptSilentNewUserCredentialPayload: jest.fn(async () => ({ decrypted: true })),
+}));
+
+import useFirebaseMessaging, {
+  getFcmToken,
+  registerFirebaseBackgroundHandler,
+} from '../Firebase';
 import { handleQRScan } from '../HandleQRScan';
 import { decryptFromBase64 } from '../Encrypter';
 import { prepareAccess } from '../HTTP/PasswordManager/Shared/Access';
+import { decryptSilentNewUserCredentialPayload } from '../HTTP/PasswordManager/Shared/SilentCredentialDecrypt';
 
 const messagingMock = messaging as unknown as {
   __mock: {
     state: {
       getToken: jest.Mock;
       unsubscribe: jest.Mock;
+      backgroundHandler: ((message: any) => Promise<void>) | null;
     };
     triggerMessage: (remoteMessage: any) => Promise<void>;
+    triggerBackgroundMessage: (remoteMessage: any) => Promise<void>;
   };
 };
 
@@ -521,5 +531,87 @@ describe('Firebase messaging service', () => {
 
     expect(setMessageState).not.toHaveBeenCalled();
     expect(setButtonsEnabled).not.toHaveBeenCalled();
+  });
+
+  it('auto-processes new-user-credential-silent without frontend confirmation', async () => {
+    jest.useFakeTimers();
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const setMessageState = jest.fn();
+    const setButtonsEnabled = jest.fn();
+
+    const Harness = () => {
+      useFirebaseMessaging(setMessageState, undefined, setButtonsEnabled);
+      return null;
+    };
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+    await act(async () => {
+      renderer = ReactTestRenderer.create(<Harness />);
+      await flushPromises();
+    });
+
+    await act(async () => {
+      await messagingMock.__mock.triggerMessage({
+        data: {
+          action: 'show_allow_close',
+          qrContent: JSON.stringify({
+            type: 'new-user-credential-silent',
+            source: 'extension',
+            sessionId: 'silent_session_1',
+          }),
+        },
+      });
+    });
+
+    expect(decryptSilentNewUserCredentialPayload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'new-user-credential-silent',
+        source: 'extension',
+        sessionId: 'silent_session_1',
+      }),
+    );
+    expect(consoleLogSpy).toHaveBeenCalledWith('[SilentCredential] Decrypted payload', { decrypted: true });
+    expect(setMessageState).not.toHaveBeenCalledWith(true);
+    expect(setButtonsEnabled).not.toHaveBeenCalledWith(true);
+
+    await act(async () => {
+      renderer!.unmount();
+    });
+
+    jest.clearAllTimers();
+    consoleLogSpy.mockRestore();
+    jest.useRealTimers();
+  });
+
+  it('registers a background handler that silently decrypts silent credentials', async () => {
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    registerFirebaseBackgroundHandler();
+
+    expect(typeof messagingMock.__mock.state.backgroundHandler).toBe('function');
+
+    await act(async () => {
+      await messagingMock.__mock.triggerBackgroundMessage({
+        data: {
+          qrContent: JSON.stringify({
+            type: 'new-user-credential-silent',
+            source: 'extension',
+            sessionId: 'background_silent_session',
+          }),
+        },
+      });
+    });
+
+    expect(decryptSilentNewUserCredentialPayload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'new-user-credential-silent',
+        source: 'extension',
+        sessionId: 'background_silent_session',
+      }),
+    );
+    expect(consoleLogSpy).toHaveBeenCalledWith('[SilentCredential] Decrypted payload', { decrypted: true });
+
+    consoleLogSpy.mockRestore();
   });
 });

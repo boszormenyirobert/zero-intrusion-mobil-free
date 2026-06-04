@@ -10,6 +10,7 @@ export const normalizeApiBaseUrl = (url: string) => url.trim().replace(/\/+$/, '
 export const API_PATHS = {
   API_REGISTRATION_TO_ENCRYPT: '/api/credential-hub/shared/registration/new/to-encrypt',
   API_REGISTRATION: '/api/credential-hub/shared/registration/new',
+  API_REGISTRATION_NEW_SAVE: '/api/credential-hub/shared/registration/new/save',
   API_LOGIN: '/api/credential-hub/domain/read/credential',
   API_SECURE_DEVICE: '/api/credential-hub/one-touch/identifier',
   API_DECRYPTED_CREDENTIALS: '/api/credential-hub/domain/read/credential/decrypted',

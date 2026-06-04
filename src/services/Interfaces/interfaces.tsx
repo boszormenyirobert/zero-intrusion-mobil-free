@@ -98,6 +98,13 @@ export interface RequestCredentialsToEncrypt {
   registrationProcessId?: string;
 }
 
+export interface NewUserCredential {
+  type: 'new-user-credential';
+  source?: string;
+  sessionId: string;
+  userPublicId?: string;
+}
+
 export interface Access {
   domain?: string;
   sessionId?: string;
@@ -180,6 +187,7 @@ export type QRData =
   | Access
   | Delete
   | Clone
+  | NewUserCredential
   | UserCredentialDecryption;
 
 export const Device = {
