@@ -28,8 +28,8 @@ android {
     namespace = "com.zerointrusion"
     
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     
     kotlinOptions {
@@ -54,6 +54,13 @@ android {
         targetSdkVersion = rootProject.ext.targetSdkVersion
         versionCode = 1
         versionName = "1.0"
+
+        externalNativeBuild {
+            cmake {
+                arguments += ["-DCMAKE_OBJECT_PATH_MAX=128"]
+                cppFlags += ["-Wno-deprecated-declarations"]
+            }
+        }
     }
     lintOptions {
         checkReleaseBuilds false

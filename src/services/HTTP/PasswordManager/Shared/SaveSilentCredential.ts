@@ -2,10 +2,15 @@ import { encryptToBase64 } from '../../../Encrypter';
 import { getApiUrl, getCredentialSecret, getPublicId } from '../../../DeviceStore';
 import { logHttpRequest, logHttpResponse } from '../../httpLogger';
 
+export type SilentCredentialTimingContext = {
+  notificationReceivedAtMs: number;
+};
+
 export const saveSilentCredential = async (
   decryptedCredential: any,
   silentPayload: any,
   sessionId: string,
+  timingContext?: SilentCredentialTimingContext,
 ): Promise<boolean> => {
   console.log('[SilentCredential] Starting save flow', { sessionId });
 
@@ -70,6 +75,16 @@ export const saveSilentCredential = async (
     },
     body: JSON.stringify(payload),
   };
+
+  const saveRequestDispatchedAtMs = Date.now();
+  if (timingContext?.notificationReceivedAtMs) {
+    console.log('[SilentCredential][Timing] notification->save-dispatch', {
+      sessionId,
+      totalMs: saveRequestDispatchedAtMs - timingContext.notificationReceivedAtMs,
+      notificationReceivedAtMs: timingContext.notificationReceivedAtMs,
+      saveRequestDispatchedAtMs,
+    });
+  }
 
   logHttpRequest('SilentCredential.saveSilentCredential', path, requestOptions);
 

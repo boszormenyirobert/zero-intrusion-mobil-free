@@ -59,6 +59,7 @@ const getParsedQrPayload = (data: Record<string, unknown>) => {
 };
 
 export const handleSilentCredentialRemoteMessage = async (remoteMessage: any) => {
+  const notificationReceivedAtMs = Date.now();
   const data = (remoteMessage?.data ?? {}) as Record<string, unknown>;
   const { parsedPayload } = getParsedQrPayload(data);
   const silentPayload = parsedPayload ?? parsePotentialJson(data.qrContent) ?? data;
@@ -97,7 +98,9 @@ export const handleSilentCredentialRemoteMessage = async (remoteMessage: any) =>
       return true;
     }
 
-    await saveSilentCredential(decryptedPayload, silentPayload, sessionId);
+    await saveSilentCredential(decryptedPayload, silentPayload, sessionId, {
+      notificationReceivedAtMs,
+    });
   } catch (error) {
     console.error('Error decrypting new-user-credential-silent payload:', error);
   }

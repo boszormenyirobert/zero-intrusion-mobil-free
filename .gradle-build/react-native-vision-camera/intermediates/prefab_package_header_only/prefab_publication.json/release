@@ -1,0 +1,17 @@
+{
+  "installationFolder": "D:\\zero-intrusion-repositories\\ZeroIntrusion\\.gradle-build\\react-native-vision-camera\\intermediates\\prefab_package\\release\\prefab",
+  "gradlePath": ":react-native-vision-camera",
+  "packageInfo": {
+    "packageName": "react-native-vision-camera",
+    "packageSchemaVersion": 2,
+    "packageDependencies": [],
+    "modules": [
+      {
+        "moduleName": "VisionCamera",
+        "moduleHeaders": "D:\\zero-intrusion-repositories\\ZeroIntrusion\\.gradle-build\\react-native-vision-camera\\headers\\visioncamera",
+        "moduleExportLibraries": [],
+        "abis": []
+      }
+    ]
+  }
+}

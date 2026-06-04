@@ -1,0 +1,17 @@
+{
+  "installationFolder": "D:\\zero-intrusion-repositories\\ZeroIntrusion\\.gradle-build\\react-native-nitro-modules\\intermediates\\prefab_package\\release\\prefab",
+  "gradlePath": ":react-native-nitro-modules",
+  "packageInfo": {
+    "packageName": "react-native-nitro-modules",
+    "packageSchemaVersion": 2,
+    "packageDependencies": [],
+    "modules": [
+      {
+        "moduleName": "NitroModules",
+        "moduleHeaders": "D:\\zero-intrusion-repositories\\ZeroIntrusion\\.gradle-build\\react-native-nitro-modules\\headers\\nitromodules",
+        "moduleExportLibraries": [],
+        "abis": []
+      }
+    ]
+  }
+}

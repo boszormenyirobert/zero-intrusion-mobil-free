@@ -1,11 +1,52 @@
 import forge from 'node-forge';
 import { getRsaPrivateKey } from '../../../DeviceStore';
+import { nativeAesGcmDecryptUtf8, nativeRsaOaepDecryptAesKey } from './NativeRsaOaep';
 
 type SilentCredentialPayload = {
   encryptedAesKey?: string;
   encryptedData?: string;
   iv?: string;
   type?: string;
+};
+
+const MAX_DECRYPT_CACHE_SIZE = 32;
+
+let cachedPrivateKeyPem: string | null = null;
+let cachedPrivateKey: forge.pki.rsa.PrivateKey | null = null;
+const decryptedAesKeyCache = new Map<string, string>();
+
+const getCachedPrivateKey = (privateKeyPem: string): forge.pki.rsa.PrivateKey => {
+  if (cachedPrivateKey && cachedPrivateKeyPem === privateKeyPem) {
+    return cachedPrivateKey;
+  }
+
+  cachedPrivateKey = forge.pki.privateKeyFromPem(privateKeyPem);
+  cachedPrivateKeyPem = privateKeyPem;
+  return cachedPrivateKey;
+};
+
+const readCachedAesKey = (encryptedAesKey: string): string | null => {
+  const cached = decryptedAesKeyCache.get(encryptedAesKey);
+  if (!cached) {
+    return null;
+  }
+
+  // Refresh entry recency for simple LRU behavior.
+  decryptedAesKeyCache.delete(encryptedAesKey);
+  decryptedAesKeyCache.set(encryptedAesKey, cached);
+  return cached;
+};
+
+const writeCachedAesKey = (encryptedAesKey: string, aesKeyBinary: string): void => {
+  decryptedAesKeyCache.set(encryptedAesKey, aesKeyBinary);
+  if (decryptedAesKeyCache.size <= MAX_DECRYPT_CACHE_SIZE) {
+    return;
+  }
+
+  const oldestKey = decryptedAesKeyCache.keys().next().value;
+  if (oldestKey) {
+    decryptedAesKeyCache.delete(oldestKey);
+  }
 };
 
 const parseJson = (value: string): Record<string, unknown> | null => {
@@ -33,6 +74,11 @@ const normalizePayload = (payload: unknown): SilentCredentialPayload | null => {
 };
 
 const decryptRsaOaepAesKey = async (encryptedAesKey: string): Promise<string | null> => {
+  const cachedAesKey = readCachedAesKey(encryptedAesKey);
+  if (cachedAesKey) {
+    return cachedAesKey;
+  }
+
   const privateKeyPem = await getRsaPrivateKey();
 
   if (!privateKeyPem) {
@@ -40,17 +86,22 @@ const decryptRsaOaepAesKey = async (encryptedAesKey: string): Promise<string | n
     return null;
   }
 
-  console.log('[SilentCredential] Stored RSA private key resolved');
-
   try {
-    const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
+    const nativeDecryptedBase64 = await nativeRsaOaepDecryptAesKey(encryptedAesKey, privateKeyPem);
+    if (nativeDecryptedBase64) {
+      const nativeDecryptedBinary = forge.util.decode64(nativeDecryptedBase64);
+      writeCachedAesKey(encryptedAesKey, nativeDecryptedBinary);
+      return nativeDecryptedBinary;
+    }
+
+    const privateKey = getCachedPrivateKey(privateKeyPem);
     const decryptedBinary = privateKey.decrypt(
       forge.util.decode64(encryptedAesKey),
       'RSA-OAEP',
       { md: forge.md.sha256.create(), mgf1: { md: forge.md.sha256.create() } },
     );
 
-    console.log('[SilentCredential] RSA AES key decrypted successfully');
+    writeCachedAesKey(encryptedAesKey, decryptedBinary);
 
     return decryptedBinary;
   } catch (error) {
@@ -79,13 +130,6 @@ const decryptAesGcm = (
     const ciphertext = ciphertextWithTag.slice(0, ciphertextWithTag.length - GCM_TAG_BYTES);
     const tag = ciphertextWithTag.slice(ciphertextWithTag.length - GCM_TAG_BYTES);
 
-    console.log('[SilentCredential] AES-GCM params', {
-      keyBytes: aesKeyBinary.length,
-      ivBytes: ivBinary.length,
-      cipherBytes: ciphertext.length,
-      tagBytes: tag.length,
-    });
-
     const decipher = forge.cipher.createDecipher('AES-GCM', forge.util.createBuffer(aesKeyBinary));
     decipher.start({
       iv: forge.util.createBuffer(ivBinary),
@@ -106,20 +150,22 @@ const decryptAesGcm = (
   }
 };
 
+const decryptAesGcmWithNativeFirst = async (
+  encryptedDataBase64: string,
+  aesKeyBinary: string,
+  ivBase64: string,
+): Promise<string | null> => {
+  const aesKeyBase64 = forge.util.encode64(aesKeyBinary);
+  const nativeResult = await nativeAesGcmDecryptUtf8(encryptedDataBase64, aesKeyBase64, ivBase64);
+  if (nativeResult !== null) {
+    return nativeResult;
+  }
+
+  return decryptAesGcm(encryptedDataBase64, aesKeyBinary, ivBase64);
+};
+
 export const decryptSilentNewUserCredentialPayload = async (payload: unknown) => {
   const normalized = normalizePayload(payload);
-
-  console.log('[SilentCredential] Starting decrypt', {
-    hasPayload: Boolean(normalized),
-    hasEncryptedAesKey: Boolean(normalized?.encryptedAesKey),
-    hasEncryptedData: Boolean(normalized?.encryptedData),
-    hasIv: Boolean(normalized?.iv),
-    type: normalized?.type ?? null,
-    iv: normalized?.iv ?? null,
-    encryptedAesKeyLength: normalized?.encryptedAesKey?.length ?? 0,
-    encryptedDataLength: normalized?.encryptedData?.length ?? 0,
-    encryptedDataPrefix: normalized?.encryptedData?.substring(0, 40) ?? null,
-  });
 
   if (!normalized?.encryptedAesKey || !normalized?.encryptedData || !normalized?.iv) {
     console.error('[SilentCredential] Missing encrypted payload fields (encryptedAesKey, encryptedData, iv required)');
@@ -131,13 +177,15 @@ export const decryptSilentNewUserCredentialPayload = async (payload: unknown) =>
     return null;
   }
 
-  const decryptedText = decryptAesGcm(normalized.encryptedData, aesKeyBinary, normalized.iv);
+  const decryptedText = await decryptAesGcmWithNativeFirst(
+    normalized.encryptedData,
+    aesKeyBinary,
+    normalized.iv,
+  );
   if (!decryptedText) {
     console.error('[SilentCredential] Failed to decrypt encryptedData');
     return null;
   }
-
-  console.log('[SilentCredential] Decrypted payload', decryptedText);
 
   const parsed = parseJson(decryptedText);
   return parsed ?? decryptedText;
