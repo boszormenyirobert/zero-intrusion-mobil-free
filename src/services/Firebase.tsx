@@ -58,6 +58,36 @@ const getParsedQrPayload = (data: Record<string, unknown>) => {
   };
 };
 
+const getOptionalTargetId = (
+  data: Record<string, unknown>,
+  silentPayload: unknown,
+): string | undefined => {
+  const parsedQrData = parsePotentialJson(data.qrData);
+  if (parsedQrData && typeof parsedQrData === 'object') {
+    const parsedQrDataTargetId = (parsedQrData as Record<string, unknown>).targetId;
+    if (typeof parsedQrDataTargetId === 'string') {
+      return parsedQrDataTargetId;
+    }
+  }
+
+  if (silentPayload && typeof silentPayload === 'object') {
+    const payloadRecord = silentPayload as Record<string, unknown>;
+    if (typeof payloadRecord.targetId === 'string') {
+      return payloadRecord.targetId;
+    }
+
+    const qrContent = payloadRecord.qrContent;
+    if (qrContent && typeof qrContent === 'object') {
+      const nestedTargetId = (qrContent as Record<string, unknown>).targetId;
+      if (typeof nestedTargetId === 'string') {
+        return nestedTargetId;
+      }
+    }
+  }
+
+  return undefined;
+};
+
 export const handleSilentCredentialRemoteMessage = async (remoteMessage: any) => {
   const notificationReceivedAtMs = Date.now();
   const data = (remoteMessage?.data ?? {}) as Record<string, unknown>;
@@ -67,6 +97,11 @@ export const handleSilentCredentialRemoteMessage = async (remoteMessage: any) =>
   if (!hasSilentCredentialType(silentPayload) && data.type !== SILENT_NEW_USER_CREDENTIAL_TYPE) {
     return false;
   }
+
+  console.log('[SilentCredential] Incoming new-user-credential-silent request', {
+    data,
+    silentPayload,
+  });
 
   // Extract sessionId from the payload — look in qrContent first, then top level
   const qrContent =
@@ -79,8 +114,9 @@ export const handleSilentCredentialRemoteMessage = async (remoteMessage: any) =>
     (qrContentRecord?.sessionId as string | undefined) ??
     ((silentPayload as Record<string, unknown>)?.sessionId as string | undefined) ??
     null;
+  const targetId = getOptionalTargetId(data, silentPayload);
 
-  console.log('[SilentCredential] sessionId resolved from payload', { sessionId });
+  console.log('[SilentCredential] sessionId resolved from payload', { sessionId, targetId });
 
   try {
     const decryptedPayload = await decryptSilentNewUserCredentialPayload(silentPayload);
@@ -100,6 +136,7 @@ export const handleSilentCredentialRemoteMessage = async (remoteMessage: any) =>
 
     await saveSilentCredential(decryptedPayload, silentPayload, sessionId, {
       notificationReceivedAtMs,
+      targetId,
     });
   } catch (error) {
     console.error('Error decrypting new-user-credential-silent payload:', error);

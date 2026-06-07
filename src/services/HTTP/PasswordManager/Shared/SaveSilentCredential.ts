@@ -4,6 +4,7 @@ import { logHttpRequest, logHttpResponse } from '../../httpLogger';
 
 export type SilentCredentialTimingContext = {
   notificationReceivedAtMs: number;
+  targetId?: string;
 };
 
 export const saveSilentCredential = async (
@@ -56,6 +57,7 @@ export const saveSilentCredential = async (
     update: false,
     description: decryptedCredential?.description,
     application: decryptedCredential?.application,
+    ...(timingContext?.targetId !== undefined ? { targetId: timingContext.targetId } : {}),
   };
 
   console.log('[SilentCredential] Save payload built', {
